@@ -45,4 +45,22 @@ export class FoodService {
     if (!updated) throw new NotFoundException('Food not found');
     return { message: 'Food deleted', deletedAt: updated.deletedAt };
   }
+
+  async logMealBulk(userId: string, items: CreateFoodDto[], idempotencyKey?: string) {
+  const docs = items.map(item => ({
+    ...item,
+    userId: new Types.ObjectId(userId),
+    eatTime: new Date(item.eatTime),
+    createdAt: new Date(),
+    idempotencyKey,
+  }));
+
+  const inserted = await this.foodModel.insertMany(docs);
+
+  return {
+    message: 'Meal logged successfully',
+    ids: inserted.map(doc => doc._id),
+    count: inserted.length,
+  };
+}
 }
