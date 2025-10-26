@@ -1,3 +1,5 @@
+import { Express } from 'express';
+import { Multer } from 'multer'; 
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { s3Enabled } from '../../config/s3.config';
 import { randomUUID } from 'crypto';

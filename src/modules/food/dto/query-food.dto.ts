@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class QueryFoodDto {
@@ -20,4 +20,8 @@ export class QueryFoodDto {
   @IsOptional()
   @IsString()
   cursor?: string;
+
+  @ApiPropertyOptional({ enum: ['breakfast','lunch','dinner','snack'] })
+  @IsOptional() @IsString()
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
