@@ -1,0 +1,56 @@
+node_modules/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+bower_components/
+
+# Yarn Integrity file
+.yarn-integrity
+
+# Environment variables
+.env
+.env.*
+.env.*.local
+
+# Build output
+dist/
+build/
+
+# Debugging files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage (test output)
+coverage/
+.nyc_output/
+
+# IDE specific settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Optional PM2 log files
+pids
+logs
+*.pid
+
+# TypeScript
+*.tsbuildinfo
+
+# NestJS cache
+.cache/
