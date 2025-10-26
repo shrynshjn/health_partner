@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './modules/auth/auth.module';
@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PhysicalModule } from './modules/physical/physical.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { MediaModule } from './modules/media/media.module';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -34,4 +35,8 @@ import { MediaModule } from './modules/media/media.module';
     MediaModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*'); // Log every route
+  }
+}
