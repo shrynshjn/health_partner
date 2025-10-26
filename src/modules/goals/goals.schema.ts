@@ -17,6 +17,9 @@ export class Goals {
 
   @Prop({ type: [Object], default: [] })
   goals: GoalItem[];
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const GoalsSchema = SchemaFactory.createForClass(Goals);

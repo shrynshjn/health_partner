@@ -36,6 +36,9 @@ export class Food {
   @Prop() naturalText?: string;
   @Prop() idempotencyKey?: string;
   @Prop() deletedAt?: Date;
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const FoodSchema = SchemaFactory.createForClass(Food);

@@ -16,6 +16,9 @@ export class Water {
 
   @Prop({ type: [String], default: [] }) media?: string[]; // urls
   @Prop() naturalText?: string;
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const WaterSchema = SchemaFactory.createForClass(Water);

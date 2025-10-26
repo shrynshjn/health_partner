@@ -19,6 +19,9 @@ export class HealthParam {
   @Prop() unit?: string;
   @Prop() category?: string;
   @Prop() idempotencyKey?: string;
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const HealthParamSchema = SchemaFactory.createForClass(HealthParam);

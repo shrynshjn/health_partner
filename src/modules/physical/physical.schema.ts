@@ -28,6 +28,9 @@ export class PhysicalParam {
 
   @Prop({ type: [String], default: [] })
   media?: string[];
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const PhysicalParamSchema = SchemaFactory.createForClass(PhysicalParam);

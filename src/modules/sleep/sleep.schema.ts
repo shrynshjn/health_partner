@@ -17,6 +17,9 @@ export class Sleep {
 
   @Prop({ type: [String], default: [] }) media?: string[];
   @Prop() naturalText?: string;
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const SleepSchema = SchemaFactory.createForClass(Sleep);

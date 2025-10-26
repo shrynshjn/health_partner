@@ -24,6 +24,9 @@ export class Workout {
   @Prop() deletedAt?: Date;
   @Prop({ type: [String], default: [] }) media?: string[];
   @Prop() naturalText?: string;
+
+  @Prop() createdAt?: Date;
+  @Prop() updatedAt?: Date;
 }
 
 export const WorkoutSchema = SchemaFactory.createForClass(Workout);
