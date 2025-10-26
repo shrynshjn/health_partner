@@ -9,6 +9,8 @@ import { WaterModule } from './modules/water/water.module';
 import { SleepModule } from './modules/sleep/sleep.module';
 import { HealthModule } from './modules/health/health.module';
 import { PhysicalModule } from './modules/physical/physical.module';
+import { GoalsModule } from './modules/goals/goals.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { PhysicalModule } from './modules/physical/physical.module';
     SleepModule,
     HealthModule,
     PhysicalModule,
+    GoalsModule,
+    MediaModule,
   ],
 })
 export class AppModule {}
