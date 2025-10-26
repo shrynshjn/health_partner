@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class QueryWorkoutDto {
@@ -12,6 +13,7 @@ export class QueryWorkoutDto {
 
   @ApiPropertyOptional({ example: 50, description: 'Max number of results, default 100' })
   @IsOptional()
+  @Type(() => Number) 
   @IsInt()
   @Min(1)
   limit?: number;

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class QuerySleepDto {
@@ -12,6 +13,7 @@ export class QuerySleepDto {
 
   @ApiPropertyOptional({ example: 20, description: 'Number of sleep logs to fetch' })
   @IsOptional()
+  @Type(() => Number) 
   @IsInt()
   @Min(1)
   limit?: number;
