@@ -24,17 +24,35 @@ export class GoalsService {
   }
 
   async update(userId: string, dto: UpdateGoalsDto) {
-    const updated = await this.model.findOneAndUpdate(
-      { userId: new Types.ObjectId(userId) },
-      { $set: { goals: dto.goals } },
-      { upsert: true, new: true }
-    );
+    let doc = await this.model.findOne({ userId });
+
+    if (!doc) {
+      // Create new if no goals exist
+      doc = await this.model.create({ userId, goals: dto.goals });
+      return {
+        message: "Goals created successfully",
+        updatedAt: doc.updatedAt,
+      };
+    }
+
+    // Convert existing goals into a map for easier merging
+    const existingGoalsMap = new Map(doc.goals.map((g) => [g.parameter, g]));
+
+    // Merge or update incoming goals
+    for (const g of dto.goals) {
+      existingGoalsMap.set(g.parameter, g);
+    }
+
+    // Save merged goals back
+    const mergedGoals = Array.from(existingGoalsMap.values());
+    doc.goals = mergedGoals;
+
+    await doc.save();
+
     return {
-      message: "Goals updated successfully",
-      updatedAt: updated.updatedAt
-        ? updated.updatedAt.toISOString()
-        : new Date().toISOString(),
-      updated: updated.goals.length,
+      message: "Goals updated successfully (merged)",
+      updatedAt: doc.updatedAt,
+      updated: mergedGoals.length,
     };
   }
 }
