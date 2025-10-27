@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
+import { Model, Mongoose, Types } from "mongoose";
 import { Goals, GoalsDocument } from "./goals.schema";
 import { UpdateGoalsDto } from "./dto/update-goals.dto";
 import e from "express";
@@ -24,7 +24,7 @@ export class GoalsService {
     };
   }
 
-  async update(userId: string, dto: UpdateGoalsDto) {
+  async update(userId: Types.ObjectId, dto: UpdateGoalsDto) {
     console.log("Updating goals for user:", userId, "with dto:", dto);
     let doc = await this.model.findOne({ userId });
 
