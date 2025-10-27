@@ -34,9 +34,8 @@ export class CreateWorkoutDto {
   endTime?: string;
 
   @ApiPropertyOptional({ example: 450, description: 'Calories burned (if known)' })
-  @IsOptional()
   @IsNumber()
-  calories?: number;
+  calories: number;
 
   @ApiPropertyOptional({ example: 'outdoor', enum: ['indoor', 'outdoor', 'gym'], description: 'Workout location' })
   @IsOptional()

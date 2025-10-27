@@ -14,7 +14,7 @@ export class Workout {
   @Prop({ required: true }) startTime: Date;
   @Prop({ required: true }) duration: number; // ms
   @Prop() endTime?: Date;
-  @Prop() calories?: number;
+  @Prop() calories: number;
   @Prop({ enum: ['indoor','outdoor','gym'], required: false }) location?: string;
   @Prop() description?: string;
   @Prop({ enum: ['low','medium','high'], required: false }) intensity?: string;
