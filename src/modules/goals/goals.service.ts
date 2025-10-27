@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Goals, GoalsDocument } from "./goals.schema";
 import { UpdateGoalsDto } from "./dto/update-goals.dto";
+import e from "express";
 
 @Injectable()
 export class GoalsService {
@@ -38,7 +39,7 @@ export class GoalsService {
 
     // Convert existing goals into a map for easier merging
     const existingGoalsMap = new Map(doc.goals.map((g) => [g.parameter, g]));
-
+    console.log(existingGoalsMap);
     // Merge or update incoming goals
     for (const g of dto.goals) {
       existingGoalsMap.set(g.parameter, g);
