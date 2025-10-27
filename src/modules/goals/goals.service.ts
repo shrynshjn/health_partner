@@ -24,6 +24,7 @@ export class GoalsService {
   }
 
   async update(userId: string, dto: UpdateGoalsDto) {
+    console.log("Updating goals for user:", userId, "with dto:", dto);
     let doc = await this.model.findOne({ userId });
 
     if (!doc) {
@@ -45,14 +46,15 @@ export class GoalsService {
 
     // Save merged goals back
     const mergedGoals = Array.from(existingGoalsMap.values());
-    doc.goals = mergedGoals;
-
+    doc.goals = [...mergedGoals];
+    console.log("Merged goals:", mergedGoals);
     await doc.save();
 
     return {
       message: "Goals updated successfully (merged)",
       updatedAt: doc.updatedAt,
-      updated: mergedGoals.length,
+      updated: doc.goals.length,
+      goals: doc.goals,
     };
   }
 }
