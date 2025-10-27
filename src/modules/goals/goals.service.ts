@@ -24,13 +24,16 @@ export class GoalsService {
     };
   }
 
-  async update(userId: Types.ObjectId, dto: UpdateGoalsDto) {
+  async update(userId: string, dto: UpdateGoalsDto) {
     console.log("Updating goals for user:", userId, "with dto:", dto);
-    let doc = await this.model.findOne({ userId });
+    let doc = await this.model.findOne({ userId: new Types.ObjectId(userId) });
 
     if (!doc) {
       // Create new if no goals exist
-      doc = await this.model.create({ userId, goals: dto.goals });
+      doc = await this.model.create({
+        userId: new Types.ObjectId(userId),
+        goals: dto.goals,
+      });
       return {
         message: "Goals created successfully",
         updatedAt: doc.updatedAt,
