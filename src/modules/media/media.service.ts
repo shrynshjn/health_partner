@@ -15,11 +15,10 @@ export class MediaService {
   async upload(
     userId: string,
     file: Express.Multer.File,
-    type: string,
     extraPath?: string
   ) {
     if (!file) throw new InternalServerErrorException("No file received");
-    const key = this.buildKey(userId, type, file.originalname, extraPath);
+    const key = this.buildKey(userId, file.originalname, extraPath);
     const enabled = s3Enabled(process.env);
 
     if (enabled) {
@@ -69,14 +68,13 @@ export class MediaService {
 
   private buildKey(
     userId: string,
-    type: string,
     originalName: string,
     extraPath?: string
   ) {
     const cleanName = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const stamp = new Date().toISOString().replace(/[:.]/g, "");
     const uid = randomUUID().split("-")[0];
-    const parts = [userId, type];
+    const parts = [userId];
     if (extraPath) parts.push(extraPath);
     return `${parts.join("/")}/${stamp}_${uid}_${cleanName}`;
   }

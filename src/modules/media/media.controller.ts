@@ -24,14 +24,13 @@ export class MediaController {
       type: 'object',
       properties: {
         file: { type: 'string', format: 'binary' },
-        type: { type: 'string', enum: ['food','workout','sleep','water','report'] },
         path: { type: 'string' }
       },
-      required: ['file', 'type']
+      required: ['file']
     }
   })
   @ApiOkResponse({ type: UploadMediaResponseDto })
   async upload(@CurrentUser() user: any, @UploadedFile() file: Express.Multer.File, @Body() dto: UploadMediaDto) {
-    return this.service.upload(user.userId, file, dto.type, dto.path);
+    return this.service.upload(user.userId, file, dto.path);
   }
 }
