@@ -1,38 +1,26 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+export type DailySummaryDocument = DailySummary & Document;
+
 @Schema({ timestamps: true })
-export class DailySummary extends Document {
+export class DailySummary {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Date, required: true, index: true })
-  day: Date;
+  @Prop({ required: true })
+  day: Date; // 'YYYY-MM-DD'
 
-  @Prop({
-    type: [
-      {
-        parameter: String,
-        goal: Number,
-        value: Number,
-        achieved: Boolean,
-      },
-    ],
-    default: [],
-  })
+  @Prop({ type: Number, required: true })
+  score: number;
+
+  @Prop({ type: Array, default: [] })
   metrics: {
     parameter: string;
     goal: number;
     value: number;
     achieved: boolean;
   }[];
-
-  @Prop({ type: Number, default: 0 })
-  score: number;
-
-  @Prop({ type: Boolean, default: false })
-  generatedByCron: boolean;
 }
 
 export const DailySummarySchema = SchemaFactory.createForClass(DailySummary);
