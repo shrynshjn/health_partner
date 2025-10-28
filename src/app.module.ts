@@ -12,7 +12,7 @@ import { PhysicalModule } from './modules/physical/physical.module';
 import { GoalsModule } from './modules/goals/goals.module';
 import { MediaModule } from './modules/media/media.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { DailySummary } from './modules/daily-summary/daily-summary.module';
+import { DailySummaryModule } from './modules/daily-summary/daily-summary.module';
 
 @Module({
   imports: [
@@ -34,7 +34,7 @@ import { DailySummary } from './modules/daily-summary/daily-summary.module';
     PhysicalModule,
     GoalsModule,
     MediaModule,
-    DailySummary,
+    DailySummaryModule,
   ],
 })
 export class AppModule implements NestModule {
