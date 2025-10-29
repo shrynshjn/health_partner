@@ -7,10 +7,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
-
+  
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-
   // Swagger
   const docConfig = new DocumentBuilder()
     .setTitle('Health Partner API')
