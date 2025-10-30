@@ -1,14 +1,35 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document, Types } from "mongoose";
 
 export type PhysicalParamDocument = PhysicalParam & Document;
 
 @Schema({ timestamps: true })
 export class PhysicalParam {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: "User", required: true, index: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['weight','height','bodyFat','waist','hip','quads','chest','biceps','calves'] })
+  @Prop({
+    required: true,
+    enum: [
+      "weight",
+      "height",
+      "bodyFat",
+      "waist",
+      "hip",
+      "quads",
+      "chest",
+      "biceps",
+      "calves",
+      "muscleMass",
+      "bmi",
+      "bmr",
+      "boneMass",
+      "metabolicAge",
+      "skeletalMuscle",
+      "subcutaneousFat",
+      "visceralFat",
+    ],
+  })
   type: string;
 
   @Prop({ required: true })

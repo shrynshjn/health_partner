@@ -81,7 +81,7 @@ Data models & indexes (overview)
   - userId, name, value, refMin, refMax, isOkay, reportTime, reportLink, unit, category, idempotencyKey
   - Index: { userId: 1, name: 1, reportTime: -1 }
 - Physical Parameter
-  - userId, type (weight|height|bodyFat|waist|hip|quads|chest|biceps|calves), value, source, measuredAt, media[], idempotencyKey, deletedAt
+  - userId, type (weight|height|bodyFat|waist|hip|quads|chest|biceps|calve|muscleMass|bmi|bmr|boneMass|metabolicAge|skeletalMuscle|subcutaneousFat|visceralFat), value, source, measuredAt, media[], idempotencyKey, deletedAt
   - Index: { userId: 1, type: 1, measuredAt: -1 }
 
 API reference (summary)
