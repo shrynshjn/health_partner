@@ -13,7 +13,9 @@ import { GoalsModule } from './modules/goals/goals.module';
 import { MediaModule } from './modules/media/media.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { DailySummaryModule } from './modules/daily-summary/daily-summary.module';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { MiscModule } from './misc/misc.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -23,6 +25,10 @@ import { DailySummaryModule } from './modules/daily-summary/daily-summary.module
       useFactory: async (config: ConfigService) => ({
         uri: config.get<string>('MONGO_URI'),
       }),
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/', // optional
     }),
     AuthModule,
     UserModule,
@@ -35,6 +41,7 @@ import { DailySummaryModule } from './modules/daily-summary/daily-summary.module
     GoalsModule,
     MediaModule,
     DailySummaryModule,
+    MiscModule,
   ],
 })
 export class AppModule implements NestModule {
