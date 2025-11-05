@@ -1,0 +1,1499 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Health Partner API",
+    "version": "1.2.0",
+    "description": "Production API for Health Partner. Authentication is provided via API Key configured in the client/console (do not include security in this spec). All timestamps MUST be sent with the user's local timezone offset and MUST NOT be converted to UTC by the client. Example: 2025-10-26T19:00:00+05:30 (IST)."
+  },
+  "servers": [
+    {
+      "url": "https://healthpartner.shrynshjn.com",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/media/upload": {
+      "post": {
+        "operationId": "upload_media",
+        "summary": "Upload a media file (image/pdf/video) and return a public URL",
+        "description": "Upload an image or other file to the server. This must use multipart/form-data, not JSON.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "type"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The media file to upload (image/pdf/video)."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["food", "workout", "sleep", "water", "report"],
+                    "description": "Context or category of the media"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Media uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "description": "Public URL of uploaded file"
+                    },
+                    "key": { "type": "string" },
+                    "mimeType": { "type": "string" },
+                    "size": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+		
+		"/api/misc/time_now": {
+      "get": {
+        "operationId": "time_now",
+        "summary": "Get the current time in ISO string format",
+        "description": "Returns the current time in ISO string format to used for logging health parameters",
+        "responses": {
+          "200": {
+            "description": "Returns the current time in ISO string format to used for logging health parameters",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "The current time in ISO 8601 format with milliseconds and 'Z' for UTC.",
+                  "example": "2025-11-05T07:37:23.000Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/goals": {
+      "get": {
+        "operationId": "get_goals",
+        "summary": "Get goals",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetGoalsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "update_goals",
+        "summary": "Update goals",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateGoalsRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateGoalsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/food": {
+      "post": {
+        "operationId": "log_food",
+        "summary": "Log a food item",
+        "description": "Client must send eatTime as ISO 8601 with timezone offset (no UTC conversion).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FoodLogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FoodLogResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_foods",
+        "summary": "Get foods in a date range",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO 8601 with timezone offset (e.g. 2025-10-26T00:00:00+05:30)."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO 8601 with timezone offset (e.g. 2025-10-27T00:00:00+05:30)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 100 }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "mealType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["breakfast", "lunch", "dinner", "snack"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FoodQueryResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/food/bulk": {
+      "post": {
+        "operationId": "log_meal_bulk",
+        "summary": "Log multiple food items",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FoodBulkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FoodBulkResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/food/{id}": {
+      "put": {
+        "operationId": "update_food",
+        "summary": "Update a food entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FoodLogRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateResult" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_food",
+        "summary": "Delete a food entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/workout": {
+      "post": {
+        "operationId": "log_workout",
+        "summary": "Log a workout",
+        "description": "Client must send startTime (and endTime if present) with timezone offset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkoutRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkoutResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_workouts",
+        "summary": "Get workouts in a date range",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 100 }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutQueryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/workout/bulk": {
+      "post": {
+        "operationId": "log_workouts_bulk",
+        "summary": "Log multiple workouts",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkoutBulkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WorkoutResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/workout/{id}": {
+      "put": {
+        "operationId": "update_workout",
+        "summary": "Update a workout",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WorkoutRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateResult" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_workout",
+        "summary": "Delete a workout entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/sleep": {
+      "post": {
+        "operationId": "log_sleep",
+        "summary": "Log sleep",
+        "description": "Client must send startTime/endTime with timezone offset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SleepRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SleepResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_sleeps",
+        "summary": "Get sleeps in a date range",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 100 }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SleepQueryResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/sleep/{id}": {
+      "put": {
+        "operationId": "update_sleep",
+        "summary": "Update a sleep entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SleepRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateResult" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_sleep",
+        "summary": "Delete a sleep entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/water": {
+      "post": {
+        "operationId": "log_water",
+        "summary": "Log water intake",
+        "description": "Client must send drankAt with timezone offset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WaterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WaterResponse" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_water",
+        "summary": "Get water logs in a date range",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 100 }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WaterQueryResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/water/{id}": {
+      "put": {
+        "operationId": "update_water",
+        "summary": "Update a water log entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/WaterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateResult" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "delete_water",
+        "summary": "Delete a water log entry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResult" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/health": {
+      "post": {
+        "operationId": "log_health_param",
+        "summary": "Log health parameter",
+        "description": "Client must send reportTime with timezone offset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HealthParamRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthParamResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/health/bulk": {
+      "post": {
+        "operationId": "log_health_params_bulk",
+        "summary": "Log multiple health parameters",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/HealthBulkRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthParamResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/health/{name}": {
+      "get": {
+        "operationId": "get_latest_health_param",
+        "summary": "Get latest health parameter",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthLatestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/health/trends": {
+      "get": {
+        "operationId": "get_health_trends",
+        "summary": "Get health parameters trends",
+        "parameters": [
+          {
+            "name": "names",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["day", "week", "month"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "series": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "points": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "t": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "value": { "type": "number" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/physical": {
+      "post": {
+        "operationId": "log_physical_param",
+        "summary": "Log physical parameter",
+        "description": "Client must send measuredAt with timezone offset.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PhysicalParamRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalParamResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/physical/bulk": {
+      "post": {
+        "operationId": "log_physical_params_bulk",
+        "summary": "Log multiple physical parameters",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["items"],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/PhysicalParamRequest"
+                    }
+                  },
+                  "idempotencyKey": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalParamResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/physical/{type}": {
+      "get": {
+        "operationId": "get_latest_physical_param",
+        "summary": "Get latest physical parameter",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhysicalLatestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/physical/trends": {
+      "get": {
+        "operationId": "get_physical_trends",
+        "summary": "Get physical parameters trends",
+        "parameters": [
+          {
+            "name": "types",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset."
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["day", "week", "month"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "series": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": { "type": "string" },
+                          "points": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "t": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "value": { "type": "number" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/summary/daily": {
+      "get": {
+        "operationId": "get_daily_summary",
+        "summary": "Get daily summaries",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset (00:00 local)."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "ISO with timezone offset (next day 00:00 local)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 31 }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailySummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateResult": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DeleteResult": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "deletedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "MediaUploadResponse": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string", "format": "uri" },
+          "mimeType": { "type": "string" },
+          "size": { "type": "number" },
+          "key": { "type": "string" }
+        }
+      },
+
+      "GoalItem": {
+        "type": "object",
+        "required": ["parameter", "target", "type", "unit"],
+        "properties": {
+          "parameter": { "type": "string" },
+          "target": { "type": "number" },
+          "type": { "type": "string", "enum": ["min", "max", "target"] },
+          "unit": { "type": "string" }
+        }
+      },
+      "GetGoalsResponse": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GoalItem" }
+          },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UpdateGoalsRequest": {
+        "type": "object",
+        "required": ["goals"],
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/GoalItem" }
+          },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "UpdateGoalsResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "updated": { "type": "number" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "FoodLogRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "qty",
+          "unit",
+          "calories",
+          "protein",
+          "carbs",
+          "fats",
+          "eatTime"
+        ],
+        "properties": {
+          "user_input": { "type": "string" },
+          "name": { "type": "string" },
+          "qty": { "type": "number" },
+          "unit": { "type": "string" },
+          "source": { "type": "string" },
+          "calories": { "type": "number" },
+          "protein": { "type": "number" },
+          "carbs": { "type": "number" },
+          "fats": { "type": "number" },
+          "fibre": { "type": "number" },
+          "calcium": { "type": "number" },
+          "iron": { "type": "number" },
+          "zinc": { "type": "number" },
+          "magnesium": { "type": "number" },
+          "cholesterol": { "type": "number" },
+          "sodium": { "type": "number" },
+          "potassium": { "type": "number" },
+          "vitaminD": { "type": "number" },
+          "vitaminB12": { "type": "number" },
+          "omega3": { "type": "number" },
+          "eatTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 with timezone offset, e.g. 2025-10-26T19:00:00+05:30 (no UTC conversion)."
+          },
+          "mealType": {
+            "type": "string",
+            "enum": ["breakfast", "lunch", "dinner", "snack"]
+          },
+          "idempotencyKey": { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "naturalText": { "type": "string" }
+        }
+      },
+      "FoodLogResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "foodId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FoodBulkRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FoodLogRequest" }
+          },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "FoodBulkResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "createdIds": { "type": "array", "items": { "type": "string" } },
+          "count": { "type": "number" }
+        }
+      },
+      "FoodItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "qty": { "type": "number" },
+          "unit": { "type": "string" },
+          "calories": { "type": "number" },
+          "protein": { "type": "number" },
+          "carbs": { "type": "number" },
+          "fats": { "type": "number" },
+          "eatTime": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FoodQueryResponse": {
+        "type": "object",
+        "properties": {
+          "foods": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FoodItem" }
+          },
+          "nextCursor": { "type": ["string", "null"] }
+        }
+      },
+
+      "WorkoutRequest": {
+        "type": "object",
+        "required": ["name", "type", "startTime", "duration"],
+        "properties": {
+          "user_input": { "type": "string" },
+          "name": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["yoga", "running", "walking", "cycling", "gym"]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 with timezone offset."
+          },
+          "duration": { "type": "number", "description": "milliseconds" },
+          "endTime": { "type": "string", "format": "date-time" },
+          "calories": { "type": "number" },
+          "location": {
+            "type": "string",
+            "enum": ["indoor", "outdoor", "gym"]
+          },
+          "description": { "type": "string" },
+          "intensity": { "type": "string", "enum": ["low", "medium", "high"] },
+          "avgHeartRate": { "type": "number" },
+          "source": { "type": "string" },
+          "idempotencyKey": { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "naturalText": { "type": "string" }
+        }
+      },
+      "WorkoutResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "workoutId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WorkoutBulkRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkoutRequest" }
+          },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "WorkoutItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "startTime": { "type": "string", "format": "date-time" },
+          "duration": { "type": "number" },
+          "endTime": { "type": "string", "format": "date-time" },
+          "calories": { "type": "number" }
+        }
+      },
+      "WorkoutQueryResponse": {
+        "type": "object",
+        "properties": {
+          "workouts": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WorkoutItem" }
+          },
+          "nextCursor": { "type": ["string", "null"] }
+        }
+      },
+
+      "SleepRequest": {
+        "type": "object",
+        "required": ["startTime", "endTime", "duration", "source"],
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO with timezone offset."
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO with timezone offset."
+          },
+          "duration": { "type": "number", "description": "milliseconds" },
+          "source": { "type": "string" },
+          "idempotencyKey": { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "naturalText": { "type": "string" }
+        }
+      },
+      "SleepResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "sleepId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SleepItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "startTime": { "type": "string", "format": "date-time" },
+          "endTime": { "type": "string", "format": "date-time" },
+          "duration": { "type": "number" }
+        }
+      },
+      "SleepQueryResponse": {
+        "type": "object",
+        "properties": {
+          "sleeps": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SleepItem" }
+          },
+          "nextCursor": { "type": ["string", "null"] }
+        }
+      },
+
+      "WaterRequest": {
+        "type": "object",
+        "required": ["qty", "drankAt", "source"],
+        "properties": {
+          "qty": { "type": "number", "description": "ml" },
+          "drankAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO with timezone offset."
+          },
+          "source": { "type": "string" },
+          "idempotencyKey": { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          },
+          "naturalText": { "type": "string" }
+        }
+      },
+      "WaterResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "waterId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WaterItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "qty": { "type": "number" },
+          "drankAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WaterQueryResponse": {
+        "type": "object",
+        "properties": {
+          "water": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/WaterItem" }
+          },
+          "nextCursor": { "type": ["string", "null"] }
+        }
+      },
+
+      "HealthParamRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "value",
+          "refMin",
+          "refMax",
+          "isOkay",
+          "reportTime",
+          "unit"
+        ],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "number" },
+          "refMin": { "type": "number" },
+          "refMax": { "type": "number" },
+          "isOkay": { "type": "boolean" },
+          "reportTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO with timezone offset."
+          },
+          "reportLink": { "type": "string", "format": "uri" },
+          "unit": { "type": "string" },
+          "category": { "type": "string" },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "HealthParamResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "paramId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "HealthBulkRequest": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/HealthParamRequest" }
+          },
+          "idempotencyKey": { "type": "string" }
+        }
+      },
+      "HealthLatestResponse": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "number" },
+          "refMin": { "type": "number" },
+          "refMax": { "type": "number" },
+          "isOkay": { "type": "boolean" },
+          "reportTime": { "type": "string", "format": "date-time" },
+          "unit": { "type": "string" },
+          "category": { "type": "string" }
+        }
+      },
+
+      "PhysicalParamRequest": {
+        "type": "object",
+        "required": ["type", "value", "measuredAt", "source"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "weight",
+              "height",
+              "bodyFat",
+              "waist",
+              "hip",
+              "quads",
+              "chest",
+              "biceps",
+              "calves"
+            ]
+          },
+          "value": { "type": "number" },
+          "source": { "type": "string" },
+          "measuredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO with timezone offset."
+          },
+          "idempotencyKey": { "type": "string" },
+          "media": {
+            "type": "array",
+            "items": { "type": "string", "format": "uri" }
+          }
+        }
+      },
+      "PhysicalParamResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "paramId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PhysicalLatestResponse": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "value": { "type": "number" },
+          "source": { "type": "string" },
+          "measuredAt": { "type": "string", "format": "date-time" }
+        }
+      },
+
+      "DailySummaryItem": {
+        "type": "object",
+        "properties": {
+          "day": { "type": "string", "description": "YYYY-MM-DD local" },
+          "score": { "type": "number", "description": "0-100" },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "parameter": { "type": "string" },
+                "goal": { "type": "number" },
+                "value": { "type": "number" },
+                "achieved": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "DailySummaryResponse": {
+        "type": "object",
+        "properties": {
+          "summaries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DailySummaryItem" }
+          },
+          "nextCursor": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
