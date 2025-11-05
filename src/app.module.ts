@@ -15,7 +15,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { DailySummaryModule } from './modules/daily-summary/daily-summary.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { MiscModule } from './misc/misc.module';
+import { MiscModule } from './modules/misc/misc.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
