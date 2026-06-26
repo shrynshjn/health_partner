@@ -8,6 +8,7 @@ import { Workout, WorkoutSchema } from '../workout/workout.schema';
 import { Water, WaterSchema } from '../water/water.schema';
 import { Sleep, SleepSchema } from '../sleep/sleep.schema';
 import { Goals, GoalsSchema } from '../goals/goals.schema';
+import { DailyActivity, DailyActivitySchema } from '../daily-activity/daily-activity.schema';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Goals, GoalsSchema } from '../goals/goals.schema';
       {name: Water.name, schema: WaterSchema},
       {name: Sleep.name, schema: SleepSchema},
       {name: Goals.name, schema: GoalsSchema},
+      {name: DailyActivity.name, schema: DailyActivitySchema},
     ]),
   ],
   controllers: [DailySummaryController],

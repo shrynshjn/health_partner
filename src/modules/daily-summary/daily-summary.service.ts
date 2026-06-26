@@ -8,6 +8,7 @@ import { Workout } from '../workout/workout.schema';
 import { Water } from '../water/water.schema';
 import { Sleep } from '../sleep/sleep.schema';
 import { Goals } from '../goals/goals.schema';
+import { DailyActivity } from '../daily-activity/daily-activity.schema';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -27,6 +28,8 @@ export class DailySummaryService {
     private readonly sleepModel: Model<Sleep>,
     @InjectModel(Goals.name)
     private readonly goalsModel: Model<Goals>,
+    @InjectModel(DailyActivity.name)
+    private readonly activityModel: Model<DailyActivity>,
   ) {}
 
   async getSummary(userId: string, start: Date, end: Date) {
@@ -67,11 +70,12 @@ export class DailySummaryService {
     const goalsDoc = await this.goalsModel.findOne({ userId: userObjectId });
     if (!goalsDoc) return null;
 
-    const [foods, workouts, waterLogs, sleepLogs] = await Promise.all([
+    const [foods, workouts, waterLogs, sleepLogs, activityLog] = await Promise.all([
       this.foodModel.find({ userId, eatTime: { $gte: dateStart, $lte: dateEnd } }),
       this.workoutModel.find({ userId, startTime: { $gte: dateStart, $lte: dateEnd } }),
       this.waterModel.find({ userId, drankAt: { $gte: dateStart, $lte: dateEnd } }),
       this.sleepModel.find({ userId, startTime: { $gte: dateStart, $lte: dateEnd } }),
+      this.activityModel.findOne({ userId: userObjectId, date: dateStart.toDate() }),
     ]);
 
     const totals: Record<string, number> = {
@@ -82,6 +86,8 @@ export class DailySummaryService {
       water: waterLogs.reduce((a, w) => a + w.qty, 0),
       sleep: sleepLogs.reduce((a, s) => a + s.duration, 0) / 3600000,
       workout: workouts.reduce((a, w) => a + w.calories, 0),
+      steps: activityLog?.steps ?? 0,
+      active_minutes: activityLog?.activeMinutes ?? 0,
     };
 
     const metrics = goalsDoc.goals.map((g) => {

@@ -12,59 +12,8 @@
     }
   ],
   "paths": {
-    "/api/media/upload": {
-      "post": {
-        "operationId": "upload_media",
-        "summary": "Upload a media file (image/pdf/video) and return a public URL",
-        "description": "Upload an image or other file to the server. This must use multipart/form-data, not JSON.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": ["file", "type"],
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "The media file to upload (image/pdf/video)."
-                  },
-                  "type": {
-                    "type": "string",
-                    "enum": ["food", "workout", "sleep", "water", "report"],
-                    "description": "Context or category of the media"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Media uploaded successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "url": {
-                      "type": "string",
-                      "description": "Public URL of uploaded file"
-                    },
-                    "key": { "type": "string" },
-                    "mimeType": { "type": "string" },
-                    "size": { "type": "number" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
 		
-		"/api/misc/time_now": {
+    "/api/misc/time_now": {
       "get": {
         "operationId": "time_now",
         "summary": "Get the current time in ISO string format",
@@ -73,12 +22,18 @@
           "200": {
             "description": "Returns the current time in ISO string format to used for logging health parameters",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "The current time in ISO 8601 format with milliseconds and 'Z' for UTC.",
-                  "example": "2025-11-05T07:37:23.000Z"
+                  "type": "object",
+                  "properties": {
+                    "time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "The current time in ISO 8601 format with milliseconds and 'Z' for UTC.",
+                      "example": "2025-11-05T07:37:23.000Z"
+                    }
+                  },
+                  "required": ["time"]
                 }
               }
             }
@@ -1012,6 +967,11 @@
     }
   },
   "components": {
+    "ApiKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "x-api-key"
+    },
     "schemas": {
       "UpdateResult": {
         "type": "object",
