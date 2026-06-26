@@ -16,6 +16,7 @@ import { DailySummaryModule } from './modules/daily-summary/daily-summary.module
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MiscModule } from './modules/misc/misc.module';
+import { DailyActivityModule } from './modules/daily-activity/daily-activity.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -42,6 +43,7 @@ import { MiscModule } from './modules/misc/misc.module';
     MediaModule,
     DailySummaryModule,
     MiscModule,
+    DailyActivityModule,
   ],
 })
 export class AppModule implements NestModule {
