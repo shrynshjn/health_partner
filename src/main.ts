@@ -9,7 +9,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   
   app.setGlobalPrefix('api', {
-    exclude: ['mcp', 'mcp/(.*)', 'oauth/(.*)', '.well-known/(.*)'],
+    exclude: ['mcp', 'mcp/(.*)', 'oauth/(.*)', '.well-known/(.*)', 'favicon.ico', 'icon', 'icon.png', 'apple-touch-icon.png'],
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   // Swagger

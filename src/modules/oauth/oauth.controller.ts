@@ -12,6 +12,8 @@ import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { randomBytes } from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
+import { createReadStream, existsSync } from 'fs';
 
 interface AuthCodeEntry {
   userId: string;
@@ -30,6 +32,37 @@ export class OAuthController {
     private readonly authService: AuthService,
     private readonly config: ConfigService,
   ) {}
+
+  private servePublicFile(file: string, contentType: string, res: Response) {
+    const filePath = join(__dirname, '..', '..', '..', '..', 'public', file);
+    if (!existsSync(filePath)) {
+      res.status(404).end();
+      return;
+    }
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    createReadStream(filePath).pipe(res);
+  }
+
+  @Get('/favicon.ico')
+  favicon(@Res() res: Response) {
+    this.servePublicFile('favicon.ico', 'image/x-icon', res);
+  }
+
+  @Get('/icon')
+  icon(@Res() res: Response) {
+    this.servePublicFile('icon-192.png', 'image/png', res);
+  }
+
+  @Get('/icon.png')
+  iconPng(@Res() res: Response) {
+    this.servePublicFile('icon-192.png', 'image/png', res);
+  }
+
+  @Get('/apple-touch-icon.png')
+  appleTouchIcon(@Res() res: Response) {
+    this.servePublicFile('icon-192.png', 'image/png', res);
+  }
 
   @Get('/.well-known/oauth-authorization-server')
   metadata() {
