@@ -42,6 +42,8 @@ export class OAuthController {
       grant_types_supported: ['authorization_code'],
       code_challenge_methods_supported: ['S256', 'plain'],
       scopes_supported: ['health'],
+      service_documentation: `${base}/api-docs`,
+      logo_uri: `${base}/logo.png`,
     };
   }
 
