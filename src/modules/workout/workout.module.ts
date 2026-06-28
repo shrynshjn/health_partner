@@ -8,5 +8,6 @@ import { WorkoutController } from './workout.controller';
   imports: [MongooseModule.forFeature([{ name: Workout.name, schema: WorkoutSchema }])],
   providers: [WorkoutService],
   controllers: [WorkoutController],
+  exports: [WorkoutService],
 })
 export class WorkoutModule {}

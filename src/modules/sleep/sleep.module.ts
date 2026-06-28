@@ -8,5 +8,6 @@ import { SleepController } from './sleep.controller';
   imports: [MongooseModule.forFeature([{ name: Sleep.name, schema: SleepSchema }])],
   providers: [SleepService],
   controllers: [SleepController],
+  exports: [SleepService],
 })
 export class SleepModule {}

@@ -17,6 +17,8 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MiscModule } from './modules/misc/misc.module';
 import { DailyActivityModule } from './modules/daily-activity/daily-activity.module';
+import { OAuthModule } from './modules/oauth/oauth.module';
+import { McpModule } from './modules/mcp/mcp.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -44,6 +46,8 @@ import { DailyActivityModule } from './modules/daily-activity/daily-activity.mod
     DailySummaryModule,
     MiscModule,
     DailyActivityModule,
+    OAuthModule,
+    McpModule,
   ],
 })
 export class AppModule implements NestModule {

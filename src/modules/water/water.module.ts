@@ -8,5 +8,6 @@ import { WaterController } from './water.controller';
   imports: [MongooseModule.forFeature([{ name: Water.name, schema: WaterSchema }])],
   providers: [WaterService],
   controllers: [WaterController],
+  exports: [WaterService],
 })
 export class WaterModule {}

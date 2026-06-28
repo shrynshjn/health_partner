@@ -8,5 +8,6 @@ import { PhysicalController } from './physical.controller';
   imports: [MongooseModule.forFeature([{ name: PhysicalParam.name, schema: PhysicalParamSchema }])],
   providers: [PhysicalService],
   controllers: [PhysicalController],
+  exports: [PhysicalService],
 })
 export class PhysicalModule {}

@@ -8,7 +8,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
   
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['mcp', 'mcp/(.*)', 'oauth/(.*)', '.well-known/(.*)'],
+  });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   // Swagger
   const docConfig = new DocumentBuilder()

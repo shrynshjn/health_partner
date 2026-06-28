@@ -1,239 +1,341 @@
-# Health Partner — Backend
+# Health Partner — Server
 
-Health Partner is a TypeScript backend that provides the data store and APIs for a personal health partner. The backend is designed to be consumed by an AI frontend plugin (e.g., a custom GPT) which handles natural-language / image input, conversation, and guided data collection. The AI frontend uses these APIs to persist user logs, fetch historical data, calculate summaries and trends, and provide suggestions.
+A NestJS REST API + MCP server for personal health tracking. Stores food, workouts, sleep, water, physical measurements, lab results, and goals in MongoDB. Exposes all data as MCP tools so Claude can read and write health records directly via a remote connector.
 
-This README documents the purpose, data models, API surface, conventions (errors, idempotency), and developer setup.
+---
 
-Table of contents
-- [Key ideas](#key-ideas)
-- [Features](#features)
-- [Architecture & integration pattern](#architecture--integration-pattern)
-- [Authentication & headers](#authentication--headers)
-- [Data models & indexes (overview)](#data-models--indexes-overview)
-- [API reference (summary)](#api-reference-summary)
-  - [Media API](#media-api)
-  - [Goals API](#goals-api)
-  - [Food API](#food-api)
-  - [Workout API](#workout-api)
-  - [Sleep API](#sleep-api)
-  - [Water API](#water-api)
-  - [Health Parameters API](#health-parameters-api)
-  - [Physical Parameters API](#physical-parameters-api)
-  - [Daily Summary API](#daily-summary-api)
-- [Idempotency & deduplication](#idempotency--deduplication)
-- [Error format & HTTP statuses](#error-format--http-statuses)
-- [Getting started (dev)](#getting-started-dev)
-- [Environment variables (example)](#environment-variables-example)
-- [Common scripts](#common-scripts)
-- [Testing, linting, and deployment notes](#testing-linting-and-deployment-notes)
-- [Contributing](#contributing)
-- [License & contact](#license--contact)
+## Stack
 
-Key ideas
-- Backend supplies a canonical source of truth for user health data (food, workouts, sleep, water, physical & lab parameters, goals, daily summaries).
-- The AI frontend handles ambiguous input (text or image), asks clarifying questions, produces a final natural-language summary, and calls the backend to persist the confirmed log.
-- All write endpoints support an optional Idempotency-Key to prevent duplicate writes from retries.
-- Most deletes are soft-deletes (deletedAt timestamp).
+| Concern | Choice |
+|---|---|
+| Framework | NestJS 10 (Express adapter) |
+| Language | TypeScript 5 |
+| Database | MongoDB via Mongoose 8 |
+| Auth | JWT (Passport + `@nestjs/jwt`) |
+| File storage | AWS S3 (`@aws-sdk/client-s3`) |
+| MCP | `@modelcontextprotocol/sdk` — Streamable HTTP transport |
+| Tests | Jest + ts-jest + `@nestjs/testing` (57 unit tests, zero real DB) |
 
-Features
-- CRUD endpoints for: food, workouts, sleep, water, physical parameters, health parameters, goals, media uploads, daily summaries.
-- Bulk create endpoints for batch imports / report extraction.
-- Trends and timeseries endpoints for charting and analysis.
-- Authentication required on all endpoints.
-- Standardized error payload and pagination/cursor support.
+---
 
-Architecture & integration pattern
-- The AI plugin handles input parsing (OCR, image classification), user questioning, and final confirmation. After confirmation it:
-  1. Uploads any media to the Media API (POST /api/media/upload).
-  2. Calls the corresponding create endpoint (e.g., POST /api/food) with the final, validated payload and an optional Idempotency-Key.
-  3. Optionally requests summaries/trends to present contextual advice.
-- The backend is framework-agnostic in API design (examples assume Express/Nest/Next API style) and stores data in a document or relational database (models assume objectId-style identifiers).
+## Project structure
 
-Authentication & headers
-- Authorization: Bearer <token> (JWT or API key) required for all endpoints.
-- Content-Type: application/json for JSON endpoints. Use multipart/form-data for file upload endpoints.
-- Optional: Idempotency-Key header or idempotencyKey body field for POST/PUT to prevent duplicate writes.
-- Example headers:
-  - Authorization: Bearer eyJ...
-  - Content-Type: application/json
-  - Idempotency-Key: 8d0f-9f1a-...
+```
+src/
+  main.ts                        # Bootstrap, global prefix, Swagger
+  app.module.ts                  # Root module
+  common/
+    guards/jwt-auth.guard.ts
+    decorators/user.decorator.ts  # Extracts { userId, email } from JWT
+    middleware/logger.middleware.ts
+  modules/
+    auth/         POST /api/auth/register  POST /api/auth/login
+    user/         user schema (no public routes)
+    food/         CRUD + bulk  /api/food
+    workout/      CRUD + bulk  /api/workout
+    water/        CRUD         /api/water
+    sleep/        CRUD         /api/sleep
+    health/       lab values   /api/health
+    physical/     measurements /api/physical
+    goals/        GET + PUT    /api/goals
+    media/        S3 upload    /api/media/upload
+    daily-summary/             /api/daily-summary
+    daily-activity/            /api/daily-activity
+    misc/                      /api/misc/time_now  /api/privacy
+    oauth/        OAuth 2.0 server  /.well-known/…  /oauth/…
+    mcp/          MCP endpoint      /mcp
+```
 
-Data models & indexes (overview)
-- User
-  - first_name, last_name, dob, email
-- Goals
-  - userId, parameter, target, type (min|max|target), unit, updatedAt
-- Daily Summary
-  - userId, day (YYYY-MM-DD), metrics: [{ parameter, goal, value, achieved }], score (0-100)
-- Food
-  - user_input, name, qty, unit, source, calories, protein, carbs, fats, fibre, micronutrients..., eatTime, mealType, media[], naturalText, idempotencyKey, deletedAt
-  - Index: { userId: 1, eatTime: -1 }
-- Workout
-  - user_input, name, type, startTime, duration (ms), endTime, calories, location, intensity, avgHeartRate, media[], naturalText, idempotencyKey, deletedAt
-  - Index: { userId: 1, startTime: -1 }
-- Sleep
-  - userId, startTime, endTime, duration (ms), source, media[], naturalText, idempotencyKey, deletedAt
-  - Index: { userId: 1, startTime: -1 }
-- Water
-  - userId, qty (ml), drankAt, source, media[], naturalText, idempotencyKey, deletedAt
-  - Index: { userId: 1, drankAt: -1 }
-- Health Parameter (lab values)
-  - userId, name, value, refMin, refMax, isOkay, reportTime, reportLink, unit, category, idempotencyKey
-  - Index: { userId: 1, name: 1, reportTime: -1 }
-- Physical Parameter
-  - userId, type (weight|height|bodyFat|waist|hip|quads|chest|biceps|calve|muscleMass|bmi|bmr|boneMass|metabolicAge|skeletalMuscle|subcutaneousFat|visceralFat), value, source, measuredAt, media[], idempotencyKey, deletedAt
-  - Index: { userId: 1, type: 1, measuredAt: -1 }
+---
 
-API reference (summary)
-Note: all endpoints require Authorization header unless noted.
+## Running locally
 
-Media API
-- POST /api/media/upload
-  - multipart/form-data: file (binary), type (food|workout|sleep|water|report)
-  - Returns: { url, mimeType, size }
+```bash
+npm install
+# create .env (see Environment Variables below)
+npm run start:dev   # ts-node-dev with hot reload
+npm run build       # compile to dist/
+npm run test        # 57 unit tests, no DB needed
+```
 
-Goals API
-- GET /api/goals
-  - Returns user's goals array and updatedAt.
-- PUT /api/goals
-  - Body: { goals: [{ parameter, target, type, unit }], idempotencyKey? }
-  - Upserts goals. Returns { message, updated, updatedAt }
+Swagger UI: `http://localhost:3000/api-docs`
 
-Food API
-- POST /api/food
-  - Single food log. Required fields: name, qty, unit, source, calories, protein, carbs, fats, eatTime
-  - Optional: user_input, fibre, micronutrients, media[], naturalText, idempotencyKey
-  - Returns: { message, foodId, createdAt }
-- POST /api/food/bulk
-  - Bulk create: { items: [Food], idempotencyKey? }
-  - Returns createdIds, count
-- GET /api/food
-  - Query: start (ISO), end (ISO), limit?, cursor?
-  - Returns paginated foods between start (inclusive) and end (exclusive).
-- PUT /api/food/:id
-  - Update fields for a food log.
-- DELETE /api/food/:id
-  - Soft-delete: sets deletedAt.
+---
 
-Workout API
-- POST /api/workout
-  - Create a workout. Required: name, type, startTime, duration, source
-- POST /api/workout/bulk
-- GET /api/workout
-  - Query: start, end, limit, cursor
-- PUT /api/workout/:id
-- DELETE /api/workout/:id
+## Environment variables
 
-Sleep API
-- POST /api/sleep
-  - Required: startTime, endTime, duration, source
-- PUT /api/sleep/:id
-- GET /api/sleep
-  - Query: start, end, limit, cursor
-- DELETE /api/sleep/:id
+```env
+PORT=3000
+MONGO_URI=mongodb://localhost:27017/health_partner
+JWT_SECRET=your_secret_here
+JWT_EXPIRES_IN=7d
+AWS_REGION=ap-south-1
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_S3_BUCKET=your-bucket
+APP_URL=http://localhost:3000   # used in OAuth metadata discovery
+```
 
-Water API
-- POST /api/water
-  - Required: qty (ml), drankAt, source
-- PUT /api/water/:id
-- GET /api/water
-  - Query: start, end, limit, cursor
-- DELETE /api/water/:id
+---
 
-Health Parameters API (lab values)
-- POST /api/health
-  - Create a single parameter (name, value, refMin, refMax, isOkay, reportTime, unit, category, reportLink?, idempotencyKey?)
-- POST /api/health/bulk
-  - Use when extracting multiple params from a single report
-- GET /api/health/:name
-  - Returns the latest parameter value for that name
-- GET /api/health/trends
-  - Query: names[], start, end, interval (day|week|month)
+## Authentication
 
-Physical Parameters API
-- POST /api/physical
-  - Create a physical measurement (type, value, source, measuredAt, media[]).
-- POST /api/physical/bulk
-- GET /api/physical/:type
-  - Latest value for type (weight, bodyFat, etc).
-- GET /api/physical/trends
-  - Query: types[], start, end, interval
+All `/api/*` routes require `Authorization: Bearer <JWT>`.
 
-Daily Summary API
-- GET /api/summary/daily
-  - Query: start (00:00 local), end (00:00), limit?, cursor?
-  - Returns day-by-day summaries with score and metrics.
+```
+POST /api/auth/register
+  Body: { first_name, last_name, email, password, dob? }
+  Returns: { access_token }
 
-Idempotency & deduplication
-- For any endpoint that creates or upserts records (POST/PUT), clients should include an idempotency key in header or body (Idempotency-Key / idempotencyKey) to avoid duplicates when retries happen.
-- When a duplicate idempotencyKey is detected for the same user & endpoint, the server should return 409 Conflict or the original resource response.
+POST /api/auth/login
+  Body: { email, password }
+  Returns: { access_token }
+```
 
-Error format & HTTP statuses
-Standard error JSON:
+JWT payload: `{ sub: userId (MongoDB ObjectId string), email }`.
+
+---
+
+## API reference
+
+Global prefix: `/api`. All endpoints require Bearer JWT unless noted.
+
+### Food  `/api/food`
+
+```
+POST   /api/food
+  Body: { name, qty, unit, calories, protein, carbs, fats, eatTime (ISO8601),
+          mealType? (breakfast|lunch|dinner|snack),
+          user_input?, fibre?, calcium?, iron?, zinc?, magnesium?,
+          cholesterol?, sodium?, potassium?, vitaminD?, vitaminB12?, omega3?,
+          media?[], naturalText?, source?, idempotencyKey? }
+  Returns: { message, foodId, createdAt }
+
+POST   /api/food/bulk
+  Body: { items: [Food], idempotencyKey? }
+  Returns: { message, ids[], count }
+
+GET    /api/food
+  Query: start (ISO), end (ISO), mealType?, limit?, cursor?
+  Returns: { items[], nextCursor }
+
+PATCH  /api/food/:id       — partial update
+DELETE /api/food/:id       — soft delete (sets deletedAt)
+```
+
+### Workout  `/api/workout`
+
+```
+POST   /api/workout
+  Body: { name, type (yoga|running|walking|cycling|gym), startTime (ISO),
+          duration (ms), calories, endTime?, intensity? (low|medium|high),
+          location? (indoor|outdoor|gym), description?, avgHeartRate?,
+          media?[], naturalText?, source?, idempotencyKey? }
+  Returns: { message, workoutId, createdAt }
+
+POST   /api/workout/bulk
+GET    /api/workout        Query: start, end, limit?, cursor?
+PATCH  /api/workout/:id
+DELETE /api/workout/:id
+```
+
+### Water  `/api/water`
+
+```
+POST   /api/water
+  Body: { qty (ml), drankAt (ISO), source?, media?[], naturalText?, idempotencyKey? }
+  Returns: { message, waterId, createdAt }
+
+GET    /api/water          Query: start, end, limit?, cursor?
+PATCH  /api/water/:id
+DELETE /api/water/:id
+```
+
+### Sleep  `/api/sleep`
+
+```
+POST   /api/sleep
+  Body: { startTime (ISO), endTime (ISO), duration (ms),
+          source?, media?[], naturalText?, idempotencyKey? }
+  Returns: { message, sleepId, createdAt }
+
+GET    /api/sleep          Query: start, end, limit?, cursor?
+PATCH  /api/sleep/:id
+DELETE /api/sleep/:id
+```
+
+### Health (lab values)  `/api/health`
+
+```
+POST   /api/health
+  Body: { name, value, refMin, refMax, isOkay (bool), reportTime (ISO),
+          unit?, category?, reportLink?, idempotencyKey? }
+  Returns: { message, paramId, createdAt }
+
+POST   /api/health/bulk
+  Body: { items: [HealthParam], idempotencyKey? }
+
+GET    /api/health/list           — returns distinct parameter names for this user
+GET    /api/health/:name          — latest value for that parameter
+GET    /api/health/trends/all     — Query: names[], start, end, interval (day|week|month)
+```
+
+### Physical  `/api/physical`
+
+```
+POST   /api/physical
+  Body: { type (weight|height|bodyFat|waist|hip|quads|chest|biceps|calves|
+                  muscleMass|bmi|bmr|boneMass|metabolicAge|skeletalMuscle|
+                  subcutaneousFat|visceralFat),
+          value, measuredAt (ISO), source?, media?[], idempotencyKey? }
+  Returns: { message, paramId, createdAt }
+
+POST   /api/physical/bulk
+GET    /api/physical/:type        — latest value for that type
+PATCH  /api/physical/latest/:type — update the latest record
+DELETE /api/physical/latest/:type — soft delete the latest record
+GET    /api/physical/trends/all   — Query: types[], start, end, interval
+```
+
+### Goals  `/api/goals`
+
+```
+GET  /api/goals
+  Returns: { goals: [{ parameter, type (min|max|target), target, unit? }], updatedAt }
+
+PUT  /api/goals
+  Body: { goals: [{ parameter, type, target, unit? }] }
+  Returns: { message, updated, updatedAt, goals[] }
+```
+
+### Daily Summary  `/api/daily-summary`
+
+```
+GET  /api/daily-summary
+  Query: start (ISO), end (ISO)
+  Returns: [{ day, metrics: [{ parameter, goal, value, achieved }], score (0–100) }]
+  Note: generates summaries on-the-fly for days without a cached record.
+        Requires at least one goal to be set for a user.
+```
+
+### Daily Activity  `/api/daily-activity`
+
+```
+POST /api/daily-activity
+  Body: { date (ISO), steps, activeMinutes, ... }
+
+GET  /api/daily-activity
+  Query: start, end
+```
+
+### Media  `/api/media`
+
+```
+POST /api/media/upload
+  multipart/form-data: file (binary), type (food|workout|sleep|water|report)
+  Returns: { url (S3 CDN URL), mimeType, size }
+```
+
+### Misc
+
+```
+GET /api/misc/time_now   — returns current server time (no auth)
+GET /api/privacy         — privacy policy text (no auth)
+```
+
+---
+
+## MCP + OAuth 2.0
+
+The server is a self-contained OAuth 2.0 authorization server AND an MCP server. Claude connects to `/mcp` as a remote connector and goes through OAuth to authenticate as a specific user.
+
+### OAuth endpoints (no `/api` prefix, no auth required)
+
+```
+GET  /.well-known/oauth-authorization-server
+  Returns issuer, authorization_endpoint, token_endpoint, supported grants/challenges
+
+GET  /oauth/authorize?client_id=…&redirect_uri=…&response_type=code&state=…
+  Serves a plain HTML login page (email + password form).
+
+POST /oauth/authorize
+  Body (form): email, password, redirect_uri, state, code_challenge?, code_challenge_method?
+  Validates credentials via AuthService.login(), stores a short-lived auth code (5 min TTL,
+  in-memory Map), redirects to redirect_uri?code=<hex>&state=<state>.
+
+POST /oauth/token
+  Body: grant_type=authorization_code, code, redirect_uri
+  Exchanges code for JWT access token.
+  Returns: { access_token, token_type: "Bearer", expires_in: 604800 }
+```
+
+### MCP endpoint
+
+```
+GET | POST  /mcp
+  Authorization: Bearer <JWT>   (obtained via OAuth flow above)
+
+  Returns 401 with WWW-Authenticate header if token missing/invalid.
+  On valid token: creates a fresh McpServer scoped to the authenticated userId,
+  connects a StreamableHTTPServerTransport, and handles the MCP request.
+```
+
+### MCP tools (all scoped to the authenticated user — no userId param needed)
+
+| Tool | Description |
+|---|---|
+| `log_food` | Log a food entry (name, qty, unit, macros, eatTime, mealType?) |
+| `get_food_logs` | Retrieve food logs for a date range |
+| `log_workout` | Log a workout (name, type, startTime, duration ms, calories) |
+| `get_workouts` | Retrieve workouts for a date range |
+| `log_water` | Log water intake (qty ml, drankAt) |
+| `log_sleep` | Log sleep (startTime, endTime, duration ms) |
+| `get_daily_summary` | Get daily health scores and goal progress for a date range |
+| `log_health_metric` | Log a lab result (name, value, refMin, refMax, isOkay, reportTime) |
+| `log_physical` | Log a physical measurement (type, value, measuredAt) |
+| `get_goals` | Get the user's current health goals |
+
+### Connecting Claude
+
+1. In Claude Desktop or claude.ai, add a remote MCP connector with URL `https://your-server/mcp`.
+2. Claude will fetch `/.well-known/oauth-authorization-server` to discover auth endpoints.
+3. Claude opens a browser to `/oauth/authorize` — user signs in with their Health Partner credentials.
+4. After login, Claude receives an access token and connects to `/mcp`.
+
+---
+
+## Data conventions
+
+- **Timestamps**: all datetime fields accept/return ISO 8601 strings. Durations are in **milliseconds**.
+- **Pagination**: cursor-based. Pass `cursor` (last item `_id`) and `limit` to GET endpoints. Response includes `nextCursor` (null when no more pages).
+- **Soft deletes**: DELETE endpoints set `deletedAt`; records are excluded from GET queries.
+- **Idempotency**: pass `idempotencyKey` in POST body to prevent duplicate writes on retry.
+- **userId**: MongoDB ObjectId stored as string in JWT `sub` claim. Services convert to `Types.ObjectId` internally.
+
+---
+
+## Error format
+
+NestJS built-in exception filter — responses follow:
+
+```json
 {
-  "error": "invalid_input",
-  "message": "Human readable message",
-  "details": { /* field errors */ } | null,
-  "requestId": "uuid",
-  "status": 422,
-  "timestamp": "2025-10-29T..."
+  "statusCode": 400,
+  "message": "human readable string or array of validation errors",
+  "error": "Bad Request"
 }
-Common statuses used: 200, 201, 202, 204, 400, 401, 403, 404, 409, 422, 429, 500.
+```
 
-Getting started (dev)
-1. Clone:
-   git clone https://github.com/shrynshjn/health_partner.git
-   cd health_partner
-2. Install:
-   npm install
-   or
-   yarn
-3. Configure environment (see next section) and start in dev:
-   npm run dev
-   or
-   yarn dev
-4. Build for production:
-   npm run build
-   npm start
+Common codes: `400` validation, `401` missing/expired token, `404` not found, `409` conflict, `500` server error.
 
-Environment variables (example)
-- NODE_ENV=development
-- PORT=3000
-- DATABASE_URL=postgresql://user:pass@localhost:5432/health_partner
-- JWT_SECRET=your_jwt_secret
-- REDIS_URL=redis://localhost:6379
-- CDN_BUCKET_URL=https://cdn.example.com
-- SENTRY_DSN=...
-- ADDITIONAL: cloud storage keys, mailer settings for invites, etc.
+---
 
-Common scripts (update package.json to match)
-- dev — run with hot reload (ts-node-dev / nodemon)
-- build — tsc compile
-- start — run built JS
-- test — run unit & integration tests
-- lint — eslint
-- format — prettier
-- migrate — run database migrations
-- seed — seed DB for local dev
+## Tests
 
-Testing, linting, and deployment notes
-- Tests: use Jest or Vitest. Use an isolated test DB or in-memory DB (mongodb-memory-server or test Postgres).
-- Lint & format: ESLint + Prettier recommended.
-- Containerization: provide Dockerfile and docker-compose (optional) for DB and local env.
-- Secrets: do not commit .env. Use a secrets manager or env injection in CI/CD.
+```bash
+npm test           # run all 57 unit tests
+npm run test:watch # watch mode
+npm run test:cov   # with coverage report
+```
 
-Design notes & AI integration tips
-- The AI frontend must perform the human-in-the-loop confirmation before sending a final create call. The backend trusts the confirmed payloads and stores them.
-- For media uploads, prefer uploading first to CDN (Media API) and then include returned URLs in the log payload.
-- Keep granular metrics (micronutrients, durations, calories) to allow the AI to compute budgets & make suggestions.
-- Store both structured fields and a naturalText summary generated by the AI for auditability and easy presentation.
-- Provide endpoints for trends and comparisons for the AI to fetch and summarise long-term behaviors (e.g., last 7 vs last 14 days).
-
-Contributing
-- Fork the repo, create a feature branch, add tests for any new behavior, and open a pull request with a clear description.
-- Follow established linting/style and include changelog entries for significant changes.
-
-License & contact
-- Add a LICENSE file to this repo (e.g., MIT) as desired.
-- Repo: https://github.com/shrynshjn/health_partner
-- Maintainer: @shrynshjn
+Tests use `@nestjs/testing` with mocked Mongoose models — no real DB connection required. Coverage spans: all service CRUD logic, auth flows, OAuth code flow (including code reuse/mismatch/expiry), MCP controller auth, and MCP server tool registration.
