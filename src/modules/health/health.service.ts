@@ -41,10 +41,11 @@ export class HealthService {
     return { names };
   }
 
-  async trends(userId: string, names: string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
+  async trends(userId: string, names: string | string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
     const unit = interval;
+    const namesArray = Array.isArray(names) ? names : [names];
     const results = await this.model.aggregate([
-      { $match: { userId: new Types.ObjectId(userId), name: { $in: names }, reportTime: { $gte: start, $lt: end } } },
+      { $match: { userId: new Types.ObjectId(userId), name: { $in: namesArray }, reportTime: { $gte: start, $lt: end } } },
       { $addFields: { bucket: { $dateTrunc: { date: '$reportTime', unit } } } },
       { $group: { _id: { name: '$name', t: '$bucket' }, value: { $avg: '$value' }, refMin: { $avg: '$refMin' }, refMax: { $avg: '$refMax' } } },
       { $project: { _id: 0, name: '$_id.name', t: '$_id.t', value: 1, refMin: 1, refMax: 1 } },

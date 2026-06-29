@@ -55,10 +55,11 @@ export class PhysicalService {
     return { message: 'Latest parameter deleted', deletedAt: upd?.deletedAt };
   }
 
-  async trends(userId: string, types: string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
+  async trends(userId: string, types: string | string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
     const unit = interval;
+    const typesArray = Array.isArray(types) ? types : [types];
     const results = await this.model.aggregate([
-      { $match: { userId: new Types.ObjectId(userId), type: { $in: types }, measuredAt: { $gte: start, $lt: end }, deletedAt: { $exists: false } } },
+      { $match: { userId: new Types.ObjectId(userId), type: { $in: typesArray }, measuredAt: { $gte: start, $lt: end }, deletedAt: { $exists: false } } },
       { $addFields: { bucket: { $dateTrunc: { date: '$measuredAt', unit } } } },
       { $group: { _id: { type: '$type', t: '$bucket' }, value: { $avg: '$value' } } },
       { $project: { _id: 0, type: '$_id.type', t: '$_id.t', value: 1 } },
