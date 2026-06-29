@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsArray, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class QueryPhysicalTrendsDto {
   @ApiProperty({ type: [String], example: ['weight','bodyFat'], description: 'Parameter types' })
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   types: string[];
 
