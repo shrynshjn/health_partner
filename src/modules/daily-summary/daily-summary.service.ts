@@ -9,6 +9,7 @@ import { Water } from '../water/water.schema';
 import { Sleep } from '../sleep/sleep.schema';
 import { Goals } from '../goals/goals.schema';
 import { DailyActivity } from '../daily-activity/daily-activity.schema';
+import { PhysicalParam } from '../physical/physical.schema';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -30,6 +31,8 @@ export class DailySummaryService {
     private readonly goalsModel: Model<Goals>,
     @InjectModel(DailyActivity.name)
     private readonly activityModel: Model<DailyActivity>,
+    @InjectModel(PhysicalParam.name)
+    private readonly physicalModel: Model<PhysicalParam>,
   ) {}
 
   async getSummary(userId: string, start: Date, end: Date) {
@@ -95,7 +98,7 @@ export class DailySummaryService {
     const goalsList = goalsDoc?.goals?.length ? goalsDoc.goals : this.DEFAULT_GOALS;
 
     const notDeleted = { deletedAt: null };
-    const [foods, workouts, waterLogs, sleepLogs, activityLog] = await Promise.all([
+    const [foods, workouts, waterLogs, sleepLogs, activityLog, latestWeight] = await Promise.all([
       this.foodModel.find({ userId: userObjectId, eatTime: { $gte: dateStart.toDate(), $lte: dateEnd.toDate() }, ...notDeleted }),
       this.workoutModel.find({ userId: userObjectId, startTime: { $gte: dateStart.toDate(), $lte: dateEnd.toDate() }, ...notDeleted }),
       this.waterModel.find({ userId: userObjectId, drankAt: { $gte: dateStart.toDate(), $lte: dateEnd.toDate() }, ...notDeleted }),
@@ -103,6 +106,12 @@ export class DailySummaryService {
       this.sleepModel.find({ userId: userObjectId, endTime: { $gte: dateStart.toDate(), $lte: dateEnd.toDate() }, ...notDeleted }),
       // Use a date range to avoid exact-timestamp matching issues across timezones
       this.activityModel.findOne({ userId: userObjectId, date: { $gte: dateStart.toDate(), $lte: dateEnd.toDate() } }),
+      // Most recent weight on or before this day — carry forward last known value
+      this.physicalModel.findOne(
+        { userId: userObjectId, type: 'weight', measuredAt: { $lte: dateEnd.toDate() }, deletedAt: null },
+        null,
+        { sort: { measuredAt: -1 } },
+      ),
     ]);
 
     const totals: Record<string, number> = {
@@ -110,16 +119,20 @@ export class DailySummaryService {
       protein:        foods.reduce((a, f) => a + (f.protein ?? 0), 0),
       carbs:          foods.reduce((a, f) => a + (f.carbs ?? 0), 0),
       fats:           foods.reduce((a, f) => a + (f.fats ?? 0), 0),
+      fibre:          foods.reduce((a, f) => a + (f.fibre ?? 0), 0),
       water:          waterLogs.reduce((a, w) => a + (w.qty ?? 0), 0),
       sleep:          sleepLogs.reduce((a, s) => a + (s.duration ?? 0), 0) / 3_600_000,
       workout:        workouts.reduce((a, w) => a + (w.calories ?? 0), 0),
       steps:          activityLog?.steps ?? 0,
       active_minutes: activityLog?.activeMinutes ?? 0,
+      // Carry forward the most recent weight on or before this day
+      weight:         latestWeight?.value ?? 0,
     };
 
     // Skip persisting if no actual data exists for this day (avoids caching empty days)
     const hasData = totals.calories > 0 || totals.water > 0 || totals.sleep > 0 ||
-                    totals.steps > 0 || totals.active_minutes > 0 || totals.workout > 0;
+                    totals.steps > 0 || totals.active_minutes > 0 || totals.workout > 0 ||
+                    totals.weight > 0;
     if (!hasData) return null;
 
     const metrics = goalsList.map((g) => {
