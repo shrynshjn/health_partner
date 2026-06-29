@@ -41,6 +41,21 @@ export class HealthService {
     return { names };
   }
 
+  async getHistory(userId: string, name: string, start?: Date, end?: Date, limit = 200) {
+    const match: any = { userId: new Types.ObjectId(userId), name };
+    if (start || end) {
+      match.reportTime = {};
+      if (start) match.reportTime.$gte = start;
+      if (end) match.reportTime.$lte = end;
+    }
+    const records = await this.model
+      .find(match)
+      .sort({ reportTime: -1 })
+      .limit(limit)
+      .select('value refMin refMax unit reportTime');
+    return { records };
+  }
+
   async trends(userId: string, names: string | string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
     const unit = interval;
     const namesArray = Array.isArray(names) ? names : [names];

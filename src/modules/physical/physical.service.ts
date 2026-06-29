@@ -55,6 +55,21 @@ export class PhysicalService {
     return { message: 'Latest parameter deleted', deletedAt: upd?.deletedAt };
   }
 
+  async getHistory(userId: string, type: string, start?: Date, end?: Date, limit = 200) {
+    const match: any = { userId: new Types.ObjectId(userId), type, deletedAt: { $exists: false } };
+    if (start || end) {
+      match.measuredAt = {};
+      if (start) match.measuredAt.$gte = start;
+      if (end) match.measuredAt.$lte = end;
+    }
+    const records = await this.model
+      .find(match)
+      .sort({ measuredAt: -1 })
+      .limit(limit)
+      .select('value measuredAt source');
+    return { records };
+  }
+
   async trends(userId: string, types: string | string[], start: Date, end: Date, interval: 'day'|'week'|'month' = 'day') {
     const unit = interval;
     const typesArray = Array.isArray(types) ? types : [types];

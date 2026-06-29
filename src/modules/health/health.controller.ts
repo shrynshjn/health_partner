@@ -36,6 +36,22 @@ export class HealthController {
     return this.service.trends(user.userId, q.names, start, end, q.interval ?? 'day');
   }
 
+  @Get('history/:name')
+  history(
+    @CurrentUser() user: any,
+    @Param('name') name: string,
+    @Query('start') start: string,
+    @Query('end') end: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.getHistory(
+      user.userId, name,
+      start ? new Date(start) : undefined,
+      end ? new Date(end) : undefined,
+      limit ? parseInt(limit, 10) : 200,
+    );
+  }
+
   @Get(':name')
   latest(@CurrentUser() user: any, @Param('name') name: string) {
     return this.service.getLatest(user.userId, name);

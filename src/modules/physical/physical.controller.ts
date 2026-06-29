@@ -32,6 +32,22 @@ export class PhysicalController {
     return this.service.trends(user.userId, q.types, start, end, q.interval ?? 'day');
   }
 
+  @Get('history/:type')
+  history(
+    @CurrentUser() user: any,
+    @Param('type') type: string,
+    @Query('start') start: string,
+    @Query('end') end: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.getHistory(
+      user.userId, type,
+      start ? new Date(start) : undefined,
+      end ? new Date(end) : undefined,
+      limit ? parseInt(limit, 10) : 200,
+    );
+  }
+
   @Get(':type')
   latest(@CurrentUser() user: any, @Param('type') type: string) {
     return this.service.getLatest(user.userId, type);
