@@ -29,15 +29,15 @@ export class HealthController {
     return this.service.listNames(user.userId);
   }
 
-  @Get(':name')
-  latest(@CurrentUser() user: any, @Param('name') name: string) {
-    return this.service.getLatest(user.userId, name);
-  }
-
   @Get('trends/all')
   trends(@CurrentUser() user: any, @Query() q: QueryHealthTrendsDto) {
     const start = new Date(q.start);
     const end = new Date(q.end);
     return this.service.trends(user.userId, q.names, start, end, q.interval ?? 'day');
+  }
+
+  @Get(':name')
+  latest(@CurrentUser() user: any, @Param('name') name: string) {
+    return this.service.getLatest(user.userId, name);
   }
 }
