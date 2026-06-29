@@ -25,6 +25,13 @@ export class PhysicalController {
     return this.service.bulk(user.userId, dto.items, dto.idempotencyKey);
   }
 
+  @Get('trends/all')
+  trends(@CurrentUser() user: any, @Query() q: QueryPhysicalTrendsDto) {
+    const start = new Date(q.start);
+    const end = new Date(q.end);
+    return this.service.trends(user.userId, q.types, start, end, q.interval ?? 'day');
+  }
+
   @Get(':type')
   latest(@CurrentUser() user: any, @Param('type') type: string) {
     return this.service.getLatest(user.userId, type);
@@ -38,12 +45,5 @@ export class PhysicalController {
   @Delete('latest/:type')
   deleteLatest(@CurrentUser() user: any, @Param('type') type: string) {
     return this.service.deleteLatest(user.userId, type);
-  }
-
-  @Get('trends/all')
-  trends(@CurrentUser() user: any, @Query() q: QueryPhysicalTrendsDto) {
-    const start = new Date(q.start);
-    const end = new Date(q.end);
-    return this.service.trends(user.userId, q.types, start, end, q.interval ?? 'day');
   }
 }
