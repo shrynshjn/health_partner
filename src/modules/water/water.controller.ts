@@ -35,4 +35,9 @@ export class WaterController {
   delete(@CurrentUser() user: any, @Param('id') id: string) {
     return this.water.remove(user.userId, id);
   }
+
+  @Delete(':id/hard')
+  hardDelete(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.water.hardDeleteToday(user.userId, id);
+  }
 }

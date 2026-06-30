@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import dayjs from 'dayjs';
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Water, WaterDocument } from "./water.schema";
@@ -67,5 +68,18 @@ export class WaterService {
     );
     if (!updated) throw new NotFoundException("Water log not found");
     return { message: "Water deleted", deletedAt: updated.deletedAt };
+  }
+
+  async hardDeleteToday(userId: string, id: string) {
+    const todayStart = dayjs().startOf('day').toDate();
+    const todayEnd = dayjs().endOf('day').toDate();
+    const doc = await this.waterModel.findOne({
+      _id: new Types.ObjectId(id),
+      userId: new Types.ObjectId(userId),
+      drankAt: { $gte: todayStart, $lte: todayEnd },
+    });
+    if (!doc) throw new NotFoundException("Water log not found or not from today");
+    await this.waterModel.deleteOne({ _id: doc._id });
+    return { message: "Water log permanently deleted" };
   }
 }

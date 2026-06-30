@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import dayjs from 'dayjs';
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Food, FoodDocument } from "./food.schema";
@@ -68,6 +69,19 @@ export class FoodService {
     );
     if (!updated) throw new NotFoundException("Food not found");
     return { message: "Food deleted", deletedAt: updated.deletedAt };
+  }
+
+  async hardDeleteToday(userId: string, id: string) {
+    const todayStart = dayjs().startOf('day').toDate();
+    const todayEnd = dayjs().endOf('day').toDate();
+    const doc = await this.foodModel.findOne({
+      _id: new Types.ObjectId(id),
+      userId: new Types.ObjectId(userId),
+      eatTime: { $gte: todayStart, $lte: todayEnd },
+    });
+    if (!doc) throw new NotFoundException("Food item not found or not from today");
+    await this.foodModel.deleteOne({ _id: doc._id });
+    return { message: "Food item permanently deleted" };
   }
 
   async logMealBulk(

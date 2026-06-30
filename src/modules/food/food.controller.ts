@@ -58,6 +58,11 @@ export class FoodController {
     return this.food.remove(user.userId, id);
   }
 
+  @Delete(":id/hard")
+  hardDelete(@CurrentUser() user: any, @Param("id") id: string) {
+    return this.food.hardDeleteToday(user.userId, id);
+  }
+
   @Post("bulk")
   logMealBulk(@CurrentUser() user: any, @Body() body: LogMealBulkDto) {
     return this.food.logMealBulk(
