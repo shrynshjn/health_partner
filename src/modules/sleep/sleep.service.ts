@@ -35,7 +35,7 @@ export class SleepService {
   ) {
     const filter: any = {
       userId: new Types.ObjectId(userId),
-      startTime: { $gte: start, $lt: end },
+      endTime: { $gte: start, $lt: end },
       deletedAt: { $exists: false },
     };
     if (cursor) filter._id = { $lt: new Types.ObjectId(cursor) };
