@@ -22,4 +22,9 @@ export class QueryWorkoutDto {
   @IsOptional()
   @IsString()
   cursor?: string;
+
+  @ApiPropertyOptional({ example: 'running', description: 'Filter by workout type' })
+  @IsOptional()
+  @IsString()
+  type?: string;
 }

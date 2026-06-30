@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsInt, IsNumber, IsObject, IsOptional, IsString, Min } from 'class-validator';
+import { WORKOUT_TYPES } from '../workout.schema';
 
 export class CreateWorkoutDto {
   @ApiPropertyOptional({ example: 'Did a 5km run in the morning', description: 'Raw user input (optional)' })
@@ -14,9 +15,9 @@ export class CreateWorkoutDto {
   @ApiProperty({
     example: 'running',
     description: 'Type of workout',
-    enum: ['yoga', 'running', 'walking', 'cycling', 'gym'],
+    enum: [...WORKOUT_TYPES],
   })
-  @IsEnum(['yoga', 'running', 'walking', 'cycling', 'gym'])
+  @IsEnum([...WORKOUT_TYPES])
   type: string;
 
   @ApiProperty({ example: '2025-01-26T05:30:00Z', description: 'Workout start time (ISO format)' })
@@ -56,6 +57,26 @@ export class CreateWorkoutDto {
   @IsOptional()
   @IsNumber()
   avgHeartRate?: number;
+
+  @ApiPropertyOptional({ example: 5000, description: 'Distance covered in meters' })
+  @IsOptional()
+  @IsNumber()
+  distanceMeters?: number;
+
+  @ApiPropertyOptional({ example: 98, description: 'Minimum heart rate during workout' })
+  @IsOptional()
+  @IsNumber()
+  minHeartRate?: number;
+
+  @ApiPropertyOptional({ example: 178, description: 'Maximum heart rate during workout' })
+  @IsOptional()
+  @IsNumber()
+  maxHeartRate?: number;
+
+  @ApiPropertyOptional({ description: 'Platform-specific metadata, e.g. { appleHealth: { elevationAscendedMeters: 120 } }' })
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, any>;
 
   @ApiPropertyOptional({ example: 'ai', description: 'Source of data (ai, manual, import)' })
   @IsOptional()
