@@ -13,6 +13,19 @@ export class Sleep {
   @Prop({ required: true }) duration: number; // ms
   @Prop() source?: string;
   @Prop() idempotencyKey?: string;
+  @Prop() coreSleepMs?: number;
+  @Prop() deepSleepMs?: number;
+  @Prop() remSleepMs?: number;
+  @Prop() awakeDuringMs?: number;
+  @Prop() inBedMs?: number;
+  @Prop() sleepEfficiency?: number;
+  @Prop() sourceName?: string;
+  @Prop() avgHeartRate?: number;
+  @Prop() minHeartRate?: number;
+  @Prop() maxHeartRate?: number;
+  @Prop() avgHRV?: number;
+  @Prop() avgRespiratoryRate?: number;
+  @Prop() avgSpO2?: number;
   @Prop() deletedAt?: Date;
 
   @Prop({ type: [String], default: [] }) media?: string[];
