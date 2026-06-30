@@ -185,6 +185,26 @@ export class McpService {
     );
 
     server.tool(
+      'delete_food_log',
+      'Permanently delete a food log entry by its ID. Only entries logged today can be deleted.',
+      { id: z.string().describe('Food log document ID') },
+      async ({ id }) => {
+        const result = await this.food.hardDeleteToday(userId, id);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'delete_water_log',
+      'Permanently delete a water log entry by its ID. Only entries logged today can be deleted.',
+      { id: z.string().describe('Water log document ID') },
+      async ({ id }) => {
+        const result = await this.water.hardDeleteToday(userId, id);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
       'log_activity',
       'Log or update daily activity data (steps, active minutes, distance) for a given date',
       {
