@@ -12,6 +12,37 @@ let PutObjectCommand: any;
 
 @Injectable()
 export class MediaService {
+  async uploadToKey(file: Express.Multer.File, key: string): Promise<{ url: string; key: string }> {
+    if (!file) throw new InternalServerErrorException('No file received');
+    const enabled = s3Enabled(process.env);
+
+    if (enabled) {
+      if (!S3Client) {
+        ({ S3Client } = await import('@aws-sdk/client-s3'));
+        ({ PutObjectCommand } = await import('@aws-sdk/client-s3'));
+      }
+      const client = new S3Client({ region: process.env.AWS_REGION });
+      await client.send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        }),
+      );
+      const base =
+        process.env.S3_PUBLIC_URL_BASE ||
+        `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`;
+      return { url: `${base}/${key}`, key };
+    } else {
+      const uploadsDir = path.resolve(process.cwd(), 'uploads');
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const diskPath = path.join(uploadsDir, key.replaceAll('/', '_'));
+      fs.writeFileSync(diskPath, file.buffer);
+      return { url: `/uploads/${path.basename(diskPath)}`, key: path.basename(diskPath) };
+    }
+  }
+
   async upload(
     userId: string,
     file: Express.Multer.File,

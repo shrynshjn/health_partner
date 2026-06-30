@@ -19,6 +19,7 @@ import { MiscModule } from './modules/misc/misc.module';
 import { DailyActivityModule } from './modules/daily-activity/daily-activity.module';
 import { OAuthModule } from './modules/oauth/oauth.module';
 import { McpModule } from './modules/mcp/mcp.module';
+import { NotificationSettingsModule } from './modules/notification-settings/notification-settings.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -48,6 +49,7 @@ import { McpModule } from './modules/mcp/mcp.module';
     DailyActivityModule,
     OAuthModule,
     McpModule,
+    NotificationSettingsModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -17,6 +17,12 @@ export class User {
   @Prop()
   dob?: Date;
 
+  @Prop()
+  gender?: string;
+
+  @Prop()
+  photo_url?: string;
+
   @Prop({ required: true, select: false })
   password: string;
 

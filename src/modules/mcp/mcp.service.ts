@@ -10,6 +10,7 @@ import { PhysicalService } from '../physical/physical.service';
 import { GoalsService } from '../goals/goals.service';
 import { DailySummaryService } from '../daily-summary/daily-summary.service';
 import { DailyActivityService } from '../daily-activity/daily-activity.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class McpService {
@@ -23,6 +24,7 @@ export class McpService {
     private readonly goals: GoalsService,
     private readonly dailySummary: DailySummaryService,
     private readonly dailyActivity: DailyActivityService,
+    private readonly userService: UserService,
   ) {}
 
   createServerForUser(userId: string): McpServer {
@@ -180,6 +182,31 @@ export class McpService {
       {},
       async () => {
         const result = await this.goals.get(userId);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'get_profile',
+      'Get the current user\'s profile (name, email, date of birth)',
+      {},
+      async () => {
+        const result = await this.userService.getProfile(userId);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'update_profile',
+      'Update the current user\'s profile (first name, last name, date of birth)',
+      {
+        first_name: z.string().optional(),
+        last_name: z.string().optional(),
+        dob: z.string().optional().describe('ISO8601 date, e.g. 1995-06-15'),
+        gender: z.string().optional().describe('e.g. male, female, other'),
+      },
+      async (dto) => {
+        const result = await this.userService.updateProfile(userId, dto);
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
