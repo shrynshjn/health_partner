@@ -9,6 +9,7 @@ import { HealthService } from '../health/health.service';
 import { PhysicalService } from '../physical/physical.service';
 import { GoalsService } from '../goals/goals.service';
 import { DailySummaryService } from '../daily-summary/daily-summary.service';
+import { DailyActivityService } from '../daily-activity/daily-activity.service';
 
 @Injectable()
 export class McpService {
@@ -21,6 +22,7 @@ export class McpService {
     private readonly physical: PhysicalService,
     private readonly goals: GoalsService,
     private readonly dailySummary: DailySummaryService,
+    private readonly dailyActivity: DailyActivityService,
   ) {}
 
   createServerForUser(userId: string): McpServer {
@@ -178,6 +180,35 @@ export class McpService {
       {},
       async () => {
         const result = await this.goals.get(userId);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'log_activity',
+      'Log or update daily activity data (steps, active minutes, distance) for a given date',
+      {
+        date: z.string().describe('ISO8601 date, e.g. 2024-06-30'),
+        steps: z.number().optional(),
+        activeMinutes: z.number().optional(),
+        distanceMeters: z.number().optional(),
+        source: z.string().optional().describe('Data source, e.g. "apple_health", "manual"'),
+      },
+      async (dto) => {
+        const result = await this.dailyActivity.upsert(userId, dto as any);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'get_activity',
+      'Get daily activity logs (steps, active minutes, distance) for a date range',
+      {
+        start: z.string().describe('ISO8601 start date'),
+        end: z.string().describe('ISO8601 end date'),
+      },
+      async ({ start, end }) => {
+        const result = await this.dailyActivity.findByDateRange(userId, new Date(start), new Date(end));
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
