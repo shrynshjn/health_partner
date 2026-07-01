@@ -18,6 +18,10 @@ export class UpsertDailyActivityDto {
   @IsNumber() @Min(0)
   distanceMeters: number;
 
+  @ApiPropertyOptional({ example: 320 })
+  @IsOptional() @IsNumber() @Min(0)
+  calories?: number;
+
   @ApiPropertyOptional({ example: { '09': 423, '10': 1205 } })
   @IsOptional() @IsObject()
   hourlySteps?: Record<string, number>;
@@ -25,6 +29,10 @@ export class UpsertDailyActivityDto {
   @ApiPropertyOptional({ example: { '09': 8, '10': 22 } })
   @IsOptional() @IsObject()
   hourlyActiveMinutes?: Record<string, number>;
+
+  @ApiPropertyOptional({ example: { '09': 45, '10': 120 } })
+  @IsOptional() @IsObject()
+  hourlyCalories?: Record<string, number>;
 
   @ApiPropertyOptional({ example: 'apple_health' })
   @IsOptional() @IsString()

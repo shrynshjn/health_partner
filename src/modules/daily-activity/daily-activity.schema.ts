@@ -13,10 +13,12 @@ export class DailyActivity {
   @Prop({ default: 0 }) steps: number;
   @Prop({ default: 0 }) activeMinutes: number;
   @Prop({ default: 0 }) distanceMeters: number;
+  @Prop({ default: 0 }) calories: number;
 
-  // hourly breakdowns: key = "HH" (zero-padded), value = count/minutes
+  // hourly breakdowns: key = "HH" (zero-padded), value = count/minutes/kcal
   @Prop({ type: Object, default: {} }) hourlySteps: Record<string, number>;
   @Prop({ type: Object, default: {} }) hourlyActiveMinutes: Record<string, number>;
+  @Prop({ type: Object, default: {} }) hourlyCalories: Record<string, number>;
 
   @Prop() source?: string;
 
