@@ -84,8 +84,9 @@ export class DailySummaryService {
     { parameter: 'water',          target: 2500, type: 'min',    unit: 'ml'   },
     { parameter: 'sleep',          target: 7,    type: 'min',    unit: 'h'    },
     { parameter: 'steps',          target: 10000,type: 'min',    unit: 'steps'},
-    { parameter: 'active_minutes', target: 30,   type: 'min',    unit: 'min'  },
-    { parameter: 'workout',        target: 300,  type: 'min',    unit: 'kcal' },
+    { parameter: 'active_minutes',  target: 30,   type: 'min',    unit: 'min'  },
+    { parameter: 'workout',         target: 300,  type: 'min',    unit: 'kcal' },
+    { parameter: 'calories_burned', target: 500,  type: 'min',    unit: 'kcal' },
   ];
 
   async computeDailySummary(userId: string, day: Date, auto = false) {
@@ -123,10 +124,11 @@ export class DailySummaryService {
       water:          waterLogs.reduce((a, w) => a + (w.qty ?? 0), 0),
       sleep:          sleepLogs.reduce((a, s) => a + (s.duration ?? 0), 0) / 3_600_000,
       workout:        workouts.reduce((a, w) => a + (w.calories ?? 0), 0),
-      steps:          activityLog?.steps ?? 0,
-      active_minutes: activityLog?.activeMinutes ?? 0,
+      steps:            activityLog?.steps ?? 0,
+      active_minutes:   activityLog?.activeMinutes ?? 0,
+      calories_burned:  activityLog?.calories ?? 0,
       // Carry forward the most recent weight on or before this day
-      weight:         latestWeight?.value ?? 0,
+      weight:           latestWeight?.value ?? 0,
     };
 
     // Skip persisting if no actual data exists for this day (avoids caching empty days)
