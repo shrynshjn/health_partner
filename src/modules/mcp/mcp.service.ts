@@ -34,6 +34,17 @@ export class McpService {
   createServerForUser(userId: string): McpServer {
     const server = new McpServer({ name: 'health-partner', version: '1.0.0' });
 
+    // ─── Time ────────────────────────────────────────────────────────────────
+
+    server.tool(
+      'get_current_time',
+      'Get the current server time as an ISO8601 datetime string. ALWAYS call this before logging any data entry (food, water, workout, sleep, activity, physical measurement, health metric). Use the returned time as the reference for "now" — compute relative times from it (e.g. "30 minutes ago" = returned time minus 30 minutes). Never assume the current time from context.',
+      {},
+      async () => {
+        return { content: [{ type: 'text', text: JSON.stringify({ currentTime: new Date().toISOString() }) }] };
+      },
+    );
+
     // ─── Food ────────────────────────────────────────────────────────────────
 
     server.tool(
