@@ -21,6 +21,7 @@ import { OAuthModule } from './modules/oauth/oauth.module';
 import { McpModule } from './modules/mcp/mcp.module';
 import { NotificationSettingsModule } from './modules/notification-settings/notification-settings.module';
 import { WalkDaysModule } from './modules/walk-days/walk-days.module';
+import { FrequentIngredientModule } from './modules/frequent-ingredients/frequent-ingredient.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -52,6 +53,7 @@ import { WalkDaysModule } from './modules/walk-days/walk-days.module';
     McpModule,
     NotificationSettingsModule,
     WalkDaysModule,
+    FrequentIngredientModule,
   ],
 })
 export class AppModule implements NestModule {

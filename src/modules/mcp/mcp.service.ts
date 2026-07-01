@@ -11,6 +11,7 @@ import { GoalsService } from '../goals/goals.service';
 import { DailySummaryService } from '../daily-summary/daily-summary.service';
 import { DailyActivityService } from '../daily-activity/daily-activity.service';
 import { UserService } from '../user/user.service';
+import { FrequentIngredientService } from '../frequent-ingredients/frequent-ingredient.service';
 import { WalkDaysService } from '../walk-days/walk-days.service';
 
 @Injectable()
@@ -27,6 +28,7 @@ export class McpService {
     private readonly dailyActivity: DailyActivityService,
     private readonly userService: UserService,
     private readonly walkDays: WalkDaysService,
+    private readonly frequentIngredients: FrequentIngredientService,
   ) {}
 
   createServerForUser(userId: string): McpServer {
@@ -284,6 +286,58 @@ export class McpService {
       async ({ date }) => {
         const result = await this.walkDays.findByRange(userId, date, date);
         return { content: [{ type: 'text', text: JSON.stringify(result[0] ?? null) }] };
+      },
+    );
+
+    server.tool(
+      'add_frequent_ingredient',
+      'Save a frequently used ingredient with its nutritional data so it can be referenced later for accurate calorie and macro estimation',
+      {
+        name: z.string(),
+        aliases: z.array(z.string()).optional().describe('Alternative names or nicknames'),
+        brand: z.string().optional(),
+        calories: z.number().describe('Calories per serving'),
+        protein: z.number(),
+        carbs: z.number(),
+        fats: z.number(),
+        fibre: z.number().optional(),
+        additionalNutritionData: z.record(z.number()).optional().describe('Extra nutrition fields e.g. { addedSugar: 2, saturatedFat: 5, sodium: 120 }'),
+        servingUnit: z.string().optional().describe('Unit the nutrition values are based on, e.g. "100g", "1 cup"'),
+        servingSize: z.number().optional(),
+        source: z.string().optional(),
+        notes: z.string().optional(),
+      },
+      async (dto) => {
+        const result = await this.frequentIngredients.create(userId, dto as any);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'search_frequent_ingredients',
+      'Search or list the user\'s saved frequent ingredients. Use this before logging food to find known nutritional data for an ingredient',
+      {
+        q: z.string().optional().describe('Search query matched against name, aliases, and brand'),
+        limit: z.number().optional().describe('Max results to return (default 20)'),
+        cursor: z.string().optional().describe('Pagination cursor from previous response'),
+      },
+      async ({ q, limit, cursor }) => {
+        const result = await this.frequentIngredients.query(userId, {
+          q,
+          limit: limit ? String(limit) : undefined,
+          cursor,
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'delete_frequent_ingredient',
+      'Permanently delete a saved frequent ingredient by its ID',
+      { id: z.string().describe('Ingredient document ID') },
+      async ({ id }) => {
+        const result = await this.frequentIngredients.delete(userId, id);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
