@@ -74,6 +74,32 @@ export class McpService {
     );
 
     server.tool(
+      'log_food_bulk',
+      'Log multiple food entries at once — ideal for logging a full meal with several items (e.g. roti + dal + sabzi) in a single call. Before logging, call search_frequent_ingredients for each item to use accurate saved nutritional values.',
+      {
+        items: z.array(z.object({
+          name: z.string(),
+          qty: z.number(),
+          unit: z.string().describe('g, ml, piece, bowl, cup, etc.'),
+          calories: z.number(),
+          protein: z.number(),
+          carbs: z.number(),
+          fats: z.number(),
+          eatTime: z.string().describe('ISO8601 datetime of consumption'),
+          mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']).optional(),
+          fibre: z.number().optional(),
+          naturalText: z.string().optional(),
+          source: z.string().optional(),
+        })).describe('Array of food items to log together'),
+        idempotencyKey: z.string().optional().describe('Unique key to prevent duplicate submissions'),
+      },
+      async ({ items, idempotencyKey }) => {
+        const result = await this.food.logMealBulk(userId, items as any, idempotencyKey);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
       'delete_food_log',
       'Permanently delete a food log entry by its ID. Only entries logged today can be deleted — use get_food_logs to find the ID first.',
       { id: z.string().describe('Food log document _id') },
