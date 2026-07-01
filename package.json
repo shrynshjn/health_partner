@@ -12,7 +12,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "deploy": "ssh health_partner 'cd health_partner && git pull && yarn install --frozen-lockfile && yarn build && pm2 restart health-partner'"
   },
   "jest": {
     "moduleFileExtensions": [

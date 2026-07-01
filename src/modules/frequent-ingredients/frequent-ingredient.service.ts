@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FrequentIngredient, FrequentIngredientDocument } from './frequent-ingredient.schema';
 import { CreateFrequentIngredientDto } from './dto/create-frequent-ingredient.dto';
+import { UpdateFrequentIngredientDto } from './dto/update-frequent-ingredient.dto';
 import { QueryFrequentIngredientDto } from './dto/query-frequent-ingredient.dto';
 
 @Injectable()
@@ -54,6 +55,16 @@ export class FrequentIngredientService {
       _id: new Types.ObjectId(id),
       userId: new Types.ObjectId(userId),
     });
+    if (!doc) throw new NotFoundException('Ingredient not found');
+    return doc;
+  }
+
+  async update(userId: string, id: string, dto: UpdateFrequentIngredientDto) {
+    const doc = await this.model.findOneAndUpdate(
+      { _id: new Types.ObjectId(id), userId: new Types.ObjectId(userId) },
+      { $set: dto },
+      { new: true },
+    );
     if (!doc) throw new NotFoundException('Ingredient not found');
     return doc;
   }

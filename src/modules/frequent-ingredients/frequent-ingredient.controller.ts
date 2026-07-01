@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FrequentIngredientService } from './frequent-ingredient.service';
 import { CreateFrequentIngredientDto } from './dto/create-frequent-ingredient.dto';
+import { UpdateFrequentIngredientDto } from './dto/update-frequent-ingredient.dto';
 import { QueryFrequentIngredientDto } from './dto/query-frequent-ingredient.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/user.decorator';
@@ -26,6 +27,11 @@ export class FrequentIngredientController {
   @Get(':id')
   findById(@CurrentUser() user: any, @Param('id') id: string) {
     return this.service.findById(user.userId, id);
+  }
+
+  @Patch(':id')
+  update(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: UpdateFrequentIngredientDto) {
+    return this.service.update(user.userId, id, dto);
   }
 
   @Delete(':id')
