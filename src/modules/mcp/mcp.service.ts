@@ -208,6 +208,7 @@ export class McpService {
         last_name: z.string().optional(),
         dob: z.string().optional().describe('ISO8601 date, e.g. 1995-06-15'),
         gender: z.string().optional().describe('e.g. male, female, other'),
+        dietPreference: z.string().optional().describe('e.g. vegetarian, vegan, non-vegetarian, eggetarian, pescatarian'),
       },
       async (dto) => {
         const result = await this.userService.updateProfile(userId, dto);
@@ -304,6 +305,7 @@ export class McpService {
         additionalNutritionData: z.record(z.string(), z.number()).optional().describe('Extra nutrition fields e.g. { addedSugar: 2, saturatedFat: 5, sodium: 120 }'),
         servingUnit: z.string().optional().describe('Unit the nutrition values are based on, e.g. "100g", "1 cup"'),
         servingSize: z.number().optional(),
+        ingredients: z.array(z.string()).optional().describe('Raw ingredient list from packaging, e.g. ["water", "sugar", "E202", "E211"] — used for preservative and additive analysis'),
         source: z.string().optional(),
         notes: z.string().optional(),
       },

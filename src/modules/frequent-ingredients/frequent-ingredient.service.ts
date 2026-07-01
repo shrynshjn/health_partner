@@ -18,6 +18,7 @@ export class FrequentIngredientService {
       userId: new Types.ObjectId(userId),
       additionalNutritionData: dto.additionalNutritionData ?? {},
       aliases: dto.aliases ?? [],
+      ingredients: dto.ingredients ?? [],
       servingUnit: dto.servingUnit ?? '100g',
     });
     return doc;

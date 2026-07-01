@@ -26,6 +26,9 @@ export class FrequentIngredient {
   @Prop({ default: '100g' }) servingUnit: string;
   @Prop() servingSize?: number;
 
+  // Raw ingredient list (e.g. from packaging): ["water", "sugar", "E202", "modified starch"]
+  @Prop({ type: [String], default: [] }) ingredients: string[];
+
   @Prop() source?: string;
   @Prop() notes?: string;
 

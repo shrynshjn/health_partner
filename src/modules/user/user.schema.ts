@@ -20,6 +20,9 @@ export class User {
   @Prop()
   gender?: string;
 
+  @Prop({ default: 'vegetarian' })
+  dietPreference: string;
+
   @Prop()
   photo_url?: string;
 

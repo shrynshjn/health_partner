@@ -28,6 +28,10 @@ export class CreateFrequentIngredientDto {
   @ApiPropertyOptional({ example: '100g' }) @IsOptional() @IsString() servingUnit?: string;
   @ApiPropertyOptional({ example: 100 })    @IsOptional() @IsNumber() servingSize?: number;
 
+  @ApiPropertyOptional({ example: ['water', 'sugar', 'modified starch', 'E202', 'E211'], description: 'Raw ingredient list from packaging for preservative/additive analysis' })
+  @IsOptional() @IsArray() @IsString({ each: true })
+  ingredients?: string[];
+
   @ApiPropertyOptional({ example: 'manual' }) @IsOptional() @IsString() source?: string;
   @ApiPropertyOptional({ example: 'Full-fat paneer, used in curries' }) @IsOptional() @IsString() notes?: string;
 }
