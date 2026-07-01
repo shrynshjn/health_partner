@@ -301,7 +301,7 @@ export class McpService {
         carbs: z.number(),
         fats: z.number(),
         fibre: z.number().optional(),
-        additionalNutritionData: z.record(z.number()).optional().describe('Extra nutrition fields e.g. { addedSugar: 2, saturatedFat: 5, sodium: 120 }'),
+        additionalNutritionData: z.record(z.string(), z.number()).optional().describe('Extra nutrition fields e.g. { addedSugar: 2, saturatedFat: 5, sodium: 120 }'),
         servingUnit: z.string().optional().describe('Unit the nutrition values are based on, e.g. "100g", "1 cup"'),
         servingSize: z.number().optional(),
         source: z.string().optional(),
