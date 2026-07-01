@@ -10,6 +10,7 @@ import { GoalsModule } from '../goals/goals.module';
 import { DailySummaryModule } from '../daily-summary/daily-summary.module';
 import { DailyActivityModule } from '../daily-activity/daily-activity.module';
 import { UserModule } from '../user/user.module';
+import { WalkDaysModule } from '../walk-days/walk-days.module';
 import { McpService } from './mcp.service';
 import { McpController } from './mcp.controller';
 
@@ -26,6 +27,7 @@ import { McpController } from './mcp.controller';
     DailySummaryModule,
     DailyActivityModule,
     UserModule,
+    WalkDaysModule,
   ],
   providers: [McpService],
   controllers: [McpController],

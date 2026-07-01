@@ -20,6 +20,7 @@ import { DailyActivityModule } from './modules/daily-activity/daily-activity.mod
 import { OAuthModule } from './modules/oauth/oauth.module';
 import { McpModule } from './modules/mcp/mcp.module';
 import { NotificationSettingsModule } from './modules/notification-settings/notification-settings.module';
+import { WalkDaysModule } from './modules/walk-days/walk-days.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -50,6 +51,7 @@ import { NotificationSettingsModule } from './modules/notification-settings/noti
     OAuthModule,
     McpModule,
     NotificationSettingsModule,
+    WalkDaysModule,
   ],
 })
 export class AppModule implements NestModule {

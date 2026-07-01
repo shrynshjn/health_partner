@@ -23,6 +23,9 @@ export class User {
   @Prop()
   photo_url?: string;
 
+  @Prop({ type: [String], default: [] })
+  nicknames: string[];
+
   @Prop({ required: true, select: false })
   password: string;
 

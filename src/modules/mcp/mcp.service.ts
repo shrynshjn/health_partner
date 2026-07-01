@@ -11,6 +11,7 @@ import { GoalsService } from '../goals/goals.service';
 import { DailySummaryService } from '../daily-summary/daily-summary.service';
 import { DailyActivityService } from '../daily-activity/daily-activity.service';
 import { UserService } from '../user/user.service';
+import { WalkDaysService } from '../walk-days/walk-days.service';
 
 @Injectable()
 export class McpService {
@@ -25,6 +26,7 @@ export class McpService {
     private readonly dailySummary: DailySummaryService,
     private readonly dailyActivity: DailyActivityService,
     private readonly userService: UserService,
+    private readonly walkDays: WalkDaysService,
   ) {}
 
   createServerForUser(userId: string): McpServer {
@@ -257,6 +259,31 @@ export class McpService {
       async ({ start, end }) => {
         const result = await this.dailyActivity.findByDateRange(userId, new Date(start), new Date(end));
         return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'get_walk_days',
+      'Get hourly walk slot history for a date range. Each day contains a slots map keyed by hour (0–23). Each slot has status (completed/expired), completionSource (manual/healthkit), completionReason (steps/active_minutes), steps count, and activeMinutes for that hour.',
+      {
+        start: z.string().describe('Start date YYYY-MM-DD'),
+        end: z.string().describe('End date YYYY-MM-DD'),
+      },
+      async ({ start, end }) => {
+        const result = await this.walkDays.findByRange(userId, start, end);
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+      },
+    );
+
+    server.tool(
+      'get_walk_day',
+      'Get the hourly walk slots for a single day',
+      {
+        date: z.string().describe('Date YYYY-MM-DD'),
+      },
+      async ({ date }) => {
+        const result = await this.walkDays.findByRange(userId, date, date);
+        return { content: [{ type: 'text', text: JSON.stringify(result[0] ?? null) }] };
       },
     );
 
