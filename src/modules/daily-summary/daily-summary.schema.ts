@@ -20,6 +20,9 @@ export class DailySummary {
     goal: number;
     value: number;
     achieved: boolean;
+    // 'in_progress' only ever appears for the current, still-ongoing day —
+    // past days are always resolved to 'achieved' or 'failed'.
+    status: 'achieved' | 'in_progress' | 'failed';
   }[];
 }
 

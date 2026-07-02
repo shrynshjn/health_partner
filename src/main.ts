@@ -3,15 +3,17 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
-  
+
   app.setGlobalPrefix('api', {
     exclude: ['mcp', 'mcp/(.*)', 'oauth/(.*)', '.well-known/(.*)', 'favicon.ico', 'icon', 'icon.png', 'apple-touch-icon.png'],
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new GlobalExceptionFilter());
   // Swagger
   const docConfig = new DocumentBuilder()
     .setTitle('Health Partner API')

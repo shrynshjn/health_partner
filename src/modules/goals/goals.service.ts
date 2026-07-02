@@ -1,13 +1,17 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model, Mongoose, Types } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Goals, GoalsDocument } from "./goals.schema";
 import { UpdateGoalsDto } from "./dto/update-goals.dto";
-import e from "express";
+import { GOAL_CATALOG } from "./goal-catalog";
 
 @Injectable()
 export class GoalsService {
   constructor(@InjectModel(Goals.name) private model: Model<GoalsDocument>) {}
+
+  getCatalog() {
+    return { goals: GOAL_CATALOG };
+  }
 
   async get(userId: string) {
     const doc = await this.model.findOne({
@@ -55,6 +59,22 @@ export class GoalsService {
       message: "Goals updated successfully (merged)",
       updatedAt: doc.updatedAt,
       updated: doc.goals.length,
+      goals: doc.goals,
+    };
+  }
+
+  async remove(userId: string, parameter: string) {
+    const doc = await this.model.findOne({ userId: new Types.ObjectId(userId) });
+    if (!doc || !doc.goals.some((g) => g.parameter === parameter)) {
+      throw new NotFoundException(`Goal '${parameter}' not found`);
+    }
+
+    doc.goals = doc.goals.filter((g) => g.parameter !== parameter);
+    await doc.save();
+
+    return {
+      message: "Goal removed successfully",
+      updatedAt: doc.updatedAt,
       goals: doc.goals,
     };
   }

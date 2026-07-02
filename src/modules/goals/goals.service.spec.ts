@@ -57,4 +57,37 @@ describe('GoalsService', () => {
       expect(result.message).toContain('Goals updated successfully');
     });
   });
+
+  describe('getCatalog', () => {
+    it('returns the supported goal parameter list', () => {
+      const result = service.getCatalog();
+      expect(result.goals.length).toBeGreaterThan(0);
+      expect(result.goals.map((g) => g.parameter)).toContain('calories');
+    });
+  });
+
+  describe('remove', () => {
+    it('throws if no goals doc exists for the user', async () => {
+      model.findOne.mockResolvedValue(null);
+      await expect(service.remove(UID, 'calories')).rejects.toThrow();
+    });
+
+    it('throws if the parameter is not configured', async () => {
+      model.findOne.mockResolvedValue({ goals: [{ parameter: 'water' }] });
+      await expect(service.remove(UID, 'calories')).rejects.toThrow();
+    });
+
+    it('removes the matching goal and saves', async () => {
+      const existing = {
+        goals: [{ parameter: 'calories' }, { parameter: 'water' }],
+        save: jest.fn().mockResolvedValue(undefined),
+        updatedAt: new Date(),
+      };
+      model.findOne.mockResolvedValue(existing);
+      const result = await service.remove(UID, 'calories');
+      expect(existing.goals).toEqual([{ parameter: 'water' }]);
+      expect(existing.save).toHaveBeenCalled();
+      expect(result.message).toBe('Goal removed successfully');
+    });
+  });
 });

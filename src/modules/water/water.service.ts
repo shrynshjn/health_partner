@@ -43,8 +43,10 @@ export class WaterService {
       .find(filter)
       .sort({ _id: -1 })
       .limit(limit);
-    const last = items[items.length - 1] as any;
-    const nextCursor = items.length === limit ? last._id.toString() : null;
+    const nextCursor =
+      items.length > 0 && items.length === limit
+        ? (items[items.length - 1] as any)._id.toString()
+        : null;
     return { items, nextCursor };
   }
 

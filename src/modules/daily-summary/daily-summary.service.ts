@@ -8,6 +8,7 @@ import { Workout } from '../workout/workout.schema';
 import { Water } from '../water/water.schema';
 import { Sleep } from '../sleep/sleep.schema';
 import { Goals } from '../goals/goals.schema';
+import { GOAL_PARAMETERS } from '../goals/goal-catalog';
 import { DailyActivity } from '../daily-activity/daily-activity.schema';
 import { PhysicalParam } from '../physical/physical.schema';
 import dayjs from 'dayjs';
@@ -96,7 +97,10 @@ export class DailySummaryService {
 
     const goalsDoc = await this.goalsModel.findOne({ userId: userObjectId });
     // Fall back to defaults so summaries work before the user configures goals
-    const goalsList = goalsDoc?.goals?.length ? goalsDoc.goals : this.DEFAULT_GOALS;
+    const rawGoalsList = goalsDoc?.goals?.length ? goalsDoc.goals : this.DEFAULT_GOALS;
+    // Drop any parameter we don't actually know how to total up below — a
+    // legacy/invalid goal would otherwise sit at value=0 forever and drag the score down.
+    const goalsList = rawGoalsList.filter((g) => GOAL_PARAMETERS.has(g.parameter));
 
     const notDeleted = { deletedAt: null };
     const [foods, workouts, waterLogs, sleepLogs, activityLog, latestWeight] = await Promise.all([
@@ -137,6 +141,8 @@ export class DailySummaryService {
                     totals.weight > 0;
     if (!hasData) return null;
 
+    const isToday = dayjs(day).isSame(dayjs(), 'day');
+
     const metrics = goalsList.map((g) => {
       const value = totals[g.parameter.toLowerCase()] ?? 0;
       const achieved =
@@ -145,7 +151,25 @@ export class DailySummaryService {
           : g.type === 'max'
           ? value <= g.target
           : value >= g.target;
-      return { parameter: g.parameter, goal: g.target, value, achieved };
+
+      // Totals only grow over the course of a day, so a 'max'/'target' goal
+      // that's already past its upper bound can never be fixed today —
+      // that's a real failure. A 'min' (or an under-target 'target') goal
+      // can still be reached before the day ends, so it's just in progress.
+      const unrecoverable =
+        g.type === 'max'
+          ? value > g.target
+          : g.type === 'target'
+          ? value > g.target * 1.1
+          : false;
+
+      const status: 'achieved' | 'in_progress' | 'failed' = achieved
+        ? 'achieved'
+        : unrecoverable || !isToday
+        ? 'failed'
+        : 'in_progress';
+
+      return { parameter: g.parameter, goal: g.target, value, achieved, status };
     });
 
     const score = metrics.length > 0
